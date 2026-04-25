@@ -4,13 +4,4 @@
 # This source code is licensed under the BSD-style license found in the
 # LICENSE file in the root directory of this source tree.
 
-"""Fc Env Environment."""
-
-from .client import FcEnv
-from .models import FcAction, FcObservation
-
-__all__ = [
-    "FcAction",
-    "FcObservation",
-    "FcEnv",
-]
+"""FC environment: Gradio Space and in-process PPO policy."""

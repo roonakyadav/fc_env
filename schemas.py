@@ -1,9 +1,10 @@
-from pydantic import BaseModel
 from typing import List
+
+from pydantic import BaseModel
 
 
 class FcAction(BaseModel):
-    action: int  # 0-5 reveal, 6 stop
+    action: int
 
 
 class FcObservation(BaseModel):

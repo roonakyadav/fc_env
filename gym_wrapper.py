@@ -2,8 +2,8 @@ import gymnasium as gym
 from gymnasium import spaces
 import numpy as np
 
-from server.fc_env_environment import FcEnvironment
-from models import FcAction
+from fc_env_environment import FcEnvironment
+from schemas import FcAction
 
 
 class FCGymEnv(gym.Env):
