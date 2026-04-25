@@ -14,6 +14,13 @@ from models import Action
 MAX_TOKENS = 100
 HIDDEN = "HIDDEN"
 
+# Live score panel (Play tab); reset on new episode
+LIVE_STATS_DEFAULT: dict[str, int | float] = {
+    "current_tokens": MAX_TOKENS,
+    "total_reward": 0.0,
+    "step_count": 0,
+}
+
 # Game shell: dark + neon; forced dark for consistent "premium" look on all systems
 CSS_STRING = r"""
 /* --- FC Decision Lab: game skin --- */
@@ -405,6 +412,24 @@ button.gr-button.fc-btn--commit:hover:enabled, .gr-button.fc-btn--commit:hover:e
 .fc-reward-neg { color: #ff4d4d !important; font-weight: 700; }
 .fc-reward-neu { color: #d1d5db !important; font-weight: 600; }
 .fc-oneline-log { font-size: 0.95rem; color: #e5e7eb; margin: 0 0 6px; line-height: 1.45; }
+
+/* Live stats (above action buttons) */
+.fc-live-wrap { margin: 12px 0 16px; max-width: 900px; margin-left: auto; margin-right: auto; }
+.fc-live-title { margin: 0 0 10px; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: #7dd3fc !important; text-align: center; }
+.fc-live-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+@media (max-width: 640px) { .fc-live-grid { grid-template-columns: repeat(2, 1fr); } }
+.fc-live-tile {
+  text-align: center; background: linear-gradient(180deg, #0f172a, #0b1018); border: 1px solid #1e2a3a; border-radius: 12px;
+  padding: 12px 10px 14px; box-shadow: 0 0 0 1px rgba(0, 212, 255, 0.08) inset, 0 4px 20px -12px #0008;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.fc-live-tile:hover { border-color: #00d4ff33; box-shadow: 0 0 24px -10px #00d4ff22, 0 4px 20px -12px #0008; }
+.fc-live-ico { font-size: 1.1rem; line-height: 1; display: block; margin-bottom: 4px; }
+.fc-live-lbl { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.1em; color: #8b9aad !important; font-weight: 700; margin: 0 0 4px; }
+.fc-live-val { font-size: 1.2rem; font-weight: 800; color: #e8f0f8 !important; line-height: 1.2; }
+.fc-live-val--pos { color: #00ff88 !important; text-shadow: 0 0 16px #00ff8822; }
+.fc-live-val--neg { color: #ff4d4d !important; text-shadow: 0 0 16px #ff4d4d22; }
+.fc-live-val--neu { color: #cbd5e1 !important; }
 
 /* Episode trace (step-by-step, below Last action) */
 .fc-trace-outer { margin-top: 10px; }
@@ -1329,6 +1354,43 @@ def _episode_trace_html(rows: list[dict] | list | None, episode_done: bool) -> s
     )
 
 
+def _update_live_stats(prev: dict | None, o) -> dict:
+    """Cumulative total_reward += step_reward; tokens and steps from info. No-op step keeps prior stats (freeze)."""
+    info = getattr(o, "info", None) or {}
+    if info.get("action_name") == "—":
+        return dict(prev) if prev else {**LIVE_STATS_DEFAULT}
+    p = {**LIVE_STATS_DEFAULT, **(prev or {})}
+    tr = float(info.get("step_reward", o.reward))
+    return {
+        "current_tokens": int(info.get("tokens_left", o.tokens)),
+        "total_reward": float(p.get("total_reward", 0.0)) + tr,
+        "step_count": int(info.get("step_number", o.step_number)),
+    }
+
+
+def _live_stats_html(stats: dict | None) -> str:
+    s = {**LIVE_STATS_DEFAULT, **(stats or {})}
+    cur = int(s["current_tokens"])
+    used = max(0, MAX_TOKENS - cur)
+    steps = int(s["step_count"])
+    tot = float(s["total_reward"])
+    if tot > 1e-9:
+        ccls, ts = "fc-live-val--pos", f"+{tot:.2f}"
+    elif tot < -1e-9:
+        ccls, ts = "fc-live-val--neg", f"{tot:.2f}"
+    else:
+        ccls, ts = "fc-live-val--neu", f"{tot:.2f}"
+    return f"""<div class="fc-live-wrap">
+  <h3 class="fc-live-title">Live Stats</h3>
+  <div class="fc-live-grid">
+    <div class="fc-live-tile"><span class="fc-live-ico" aria-hidden="true">🪙</span><p class="fc-live-lbl">Tokens left</p><p class="fc-live-val">{cur}</p></div>
+    <div class="fc-live-tile"><span class="fc-live-ico" aria-hidden="true">🪙</span><p class="fc-live-lbl">Tokens used</p><p class="fc-live-val">{used}</p></div>
+    <div class="fc-live-tile"><span class="fc-live-ico" aria-hidden="true">🔢</span><p class="fc-live-lbl">Steps</p><p class="fc-live-val">{steps}</p></div>
+    <div class="fc-live-tile"><span class="fc-live-ico" aria-hidden="true">📈</span><p class="fc-live-lbl">Total reward</p><p class="fc-live-val {ccls}">{ts}</p></div>
+  </div>
+</div>"""
+
+
 def build_blocks() -> gr.Blocks:
     with gr.Blocks(
         title="FC Decision Lab",
@@ -1340,6 +1402,7 @@ def build_blocks() -> gr.Blocks:
                 st = gr.State()  # type: ignore[var-annotated]  # { "env", "pre_obs" }
                 history_state = gr.State(HISTORY_STATE_INIT)  # type: ignore[var-annotated]
                 episode_trace = gr.State([])  # type: ignore[var-annotated]  # list[dict] step log
+                live_stats = gr.State(dict(LIVE_STATS_DEFAULT))  # type: ignore[var-annotated]
 
                 gr.HTML(STATIC_HEADER, elem_classes=["fc-hgame"])
 
@@ -1349,6 +1412,9 @@ def build_blocks() -> gr.Blocks:
                 )
 
                 card_block = gr.HTML(_render_six_clues((HIDDEN,) * 6, None))
+                live_stats_display = gr.HTML(
+                    _live_stats_html(dict(LIVE_STATS_DEFAULT)), elem_classes=["fc-live-outer"]
+                )
 
                 with gr.Row(elem_classes=["fc-actions-row"]):
                     b_low = gr.Button(
@@ -1397,7 +1463,9 @@ def build_blocks() -> gr.Blocks:
                     st,
                     history_state,
                     episode_trace,
+                    live_stats,
                     card_block,
+                    live_stats_display,
                     last_block,
                     episode_trace_display,
                     flow,
@@ -1408,7 +1476,7 @@ def build_blocks() -> gr.Blocks:
                     b_skip,
                     b_commit,
                 ]
-                n_out = 14
+                n_out = 16
                 n_skip_updates = n_out - 1
 
                 def on_start() -> tuple:
@@ -1425,11 +1493,14 @@ def build_blocks() -> gr.Blocks:
                     h_html = _log_to_html(h0)
                     bup = _button_state_from_obs(o)
                     tr_empty: list[dict] = []
+                    ls0 = dict(LIVE_STATS_DEFAULT)
                     return (
                         s0,
                         h0,
                         tr_empty,
+                        ls0,
                         _render_six_clues(o.revealed_clues, None),
+                        _live_stats_html(ls0),
                         _last_step_html(
                             o,
                             "Episode started — your move.",
@@ -1446,6 +1517,7 @@ def build_blocks() -> gr.Blocks:
                     user_action: int,
                     hist: dict | None,
                     ep_tr: list | None,
+                    live: dict | None,
                 ) -> tuple:
                     if not s or s.get("env") is None:
                         return (s,) + (gr.update(),) * n_skip_updates
@@ -1465,11 +1537,14 @@ def build_blocks() -> gr.Blocks:
                     h_new = _log_after_step(hist, user_action, o)
                     h_html = _log_to_html(h_new)
                     new_tr = _append_episode_trace(ep_tr, o)
+                    new_live = _update_live_stats(live, o)
                     return (
                         next_s,
                         h_new,
                         new_tr,
+                        new_live,
                         _render_six_clues(o.revealed_clues, new_idx),
+                        _live_stats_html(new_live),
                         _last_step_html(
                             o,
                             _outcome_text(user_action, pre_dict, o, new_idx),
@@ -1487,23 +1562,23 @@ def build_blocks() -> gr.Blocks:
                     outputs=_out_play,
                 )
                 b_low.click(
-                    lambda s, h, t: on_step(s, 0, h, t),
-                    inputs=[st, history_state, episode_trace],
+                    lambda s, h, t, lv: on_step(s, 0, h, t, lv),
+                    inputs=[st, history_state, episode_trace, live_stats],
                     outputs=_out_play,
                 )
                 b_high.click(
-                    lambda s, h, t: on_step(s, 1, h, t),
-                    inputs=[st, history_state, episode_trace],
+                    lambda s, h, t, lv: on_step(s, 1, h, t, lv),
+                    inputs=[st, history_state, episode_trace, live_stats],
                     outputs=_out_play,
                 )
                 b_commit.click(
-                    lambda s, h, t: on_step(s, 2, h, t),
-                    inputs=[st, history_state, episode_trace],
+                    lambda s, h, t, lv: on_step(s, 2, h, t, lv),
+                    inputs=[st, history_state, episode_trace, live_stats],
                     outputs=_out_play,
                 )
                 b_skip.click(
-                    lambda s, h, t: on_step(s, 3, h, t),
-                    inputs=[st, history_state, episode_trace],
+                    lambda s, h, t, lv: on_step(s, 3, h, t, lv),
+                    inputs=[st, history_state, episode_trace, live_stats],
                     outputs=_out_play,
                 )
 

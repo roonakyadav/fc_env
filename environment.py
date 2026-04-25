@@ -51,10 +51,10 @@ class FCEnvEnvironment:
             return self._observation(
                 0.0,
                 {
-                    "action_name": "—",
-                    "step_reward": 0.0,
                     "tokens_left": int(self.tokens),
+                    "step_reward": 0.0,
                     "step_number": int(self._step_count),
+                    "action_name": "—",
                 },
             )
 
@@ -90,11 +90,12 @@ class FCEnvEnvironment:
 
         self.tokens = max(self.tokens, 0)
         self._update_state()
+        # info: step_reward and counts for API / Live Stats UI (reward math unchanged)
         info = {
-            "action_name": STEP_ACTION_NAMES.get(act, f"Action {act}"),
-            "step_reward": float(reward),
             "tokens_left": int(self.tokens),
+            "step_reward": float(reward),
             "step_number": int(self._step_count),
+            "action_name": STEP_ACTION_NAMES.get(act, f"Action {act}"),
         }
         return self._observation(reward, info)
 
