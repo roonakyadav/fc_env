@@ -447,7 +447,9 @@ summary { color: #e5e7eb; font-weight: 700; letter-spacing: 0.02em; }
 }
 .fc-compare-card {
   flex: 1 1 260px; max-width: 420px; min-width: 0;
-  border-radius: 18px; padding: 20px 20px 18px; position: relative; overflow: hidden;
+  border-radius: 18px; padding: 22px 22px 20px; position: relative; overflow: hidden;
+  min-height: 0;
+  display: flex; flex-direction: column;
   background: linear-gradient(165deg, #121a25 0%, #0a0d12 100%);
   border: 1px solid #1e2835; transition: transform 0.22s ease, box-shadow 0.25s;
 }
@@ -483,10 +485,14 @@ summary { color: #e5e7eb; font-weight: 700; letter-spacing: 0.02em; }
 .fc-compare-card--random .fc-compare-h h3 { color: #fb923c !important; text-shadow: 0 0 16px #ff4d4d35; }
 .fc-compare-card--trained .fc-compare-h h3 { color: #4ade80 !important; text-shadow: 0 0 20px #00d4ff44, 0 0 14px #00ff8833; }
 .fc-compare-icon { font-size: 1.75rem; line-height: 1; filter: drop-shadow(0 0 6px #fff3); }
-.fc-compare-metrics { display: flex; flex-direction: column; gap: 12px; position: relative; z-index: 1; }
+.fc-compare-metrics { display: flex; flex-direction: column; gap: 16px; position: relative; z-index: 1; flex: 1; justify-content: space-evenly; }
 .fc-metric {
-  text-align: center; background: #0a0e14aa; border: 1px solid #1e2832; border-radius: 12px; padding: 10px 10px 12px;
+  text-align: center; background: #0a0e14aa; border: 1px solid #1e2832; border-radius: 12px; padding: 12px 12px 14px;
   backdrop-filter: blur(6px);
+}
+.fc-compare-token-note {
+  font-size: 0.8rem; color: #8c9baf !important; text-align: center; margin: 4px 0 18px; font-style: italic; line-height: 1.4;
+  letter-spacing: 0.02em; max-width: 44rem; margin-left: auto; margin-right: auto;
 }
 .fc-compare-card--random .fc-metric { border-color: #3f2a1f; }
 .fc-compare-card--trained .fc-metric { border-color: #1a3a35; }
@@ -703,6 +709,7 @@ def _compare_panel_html() -> str:
       </div>
     </div>
   </div>
+  <p class="fc-compare-token-note">Token usage metric temporarily hidden due to ongoing calibration.</p>
   <p class="fc-compare-summary">{summary}</p>
   {foot}
 </div>
