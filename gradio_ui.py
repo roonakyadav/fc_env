@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import ast
+import json
 import gradio as gr
+from pathlib import Path
 
 from environment import FCEnvEnvironment
 from models import Action
@@ -420,12 +422,334 @@ summary { color: #e5e7eb; font-weight: 700; letter-spacing: 0.02em; }
 }
 .fc-hist-card--final { border-left-color: #f5c542; background: #141008; }
 .fc-hist-st { color: #6b7c8a; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; display: block; margin-bottom: 4px; }
+
+/* ========== Compare / About: game dashboard (tabs) ========== */
+.fc-tab-dashboard, .gr-html .fc-tab-dashboard, .prose .fc-tab-dashboard { color: #e8ecf1 !important; }
+.fc-tab-dashboard a { color: #00d4ff !important; }
+.fc-tab-dashboard code {
+  background: #131a24 !important; color: #f1f5f9 !important; padding: 2px 7px; border-radius: 6px;
+  font-size: 0.88em; border: 1px solid #2a3848;
+}
+.fc-dashboard-title {
+  font-size: 1.4rem; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; margin: 0 0 6px; color: #f8fafc !important;
+  text-shadow: 0 0 32px rgba(0, 212, 255, 0.18);
+  line-height: 1.2;
+}
+.fc-dashboard-sub {
+  font-size: 0.95rem; color: #e2e8f0 !important; margin: 0 0 20px; line-height: 1.5; max-width: 56ch;
+  font-weight: 500;
+}
+.fc-compare-arena { margin: 0 0 4px; }
+
+.fc-compare-row {
+  display: flex; flex-wrap: wrap; align-items: stretch; justify-content: center;
+  gap: 14px 18px; margin: 0 0 20px;
+}
+.fc-compare-card {
+  flex: 1 1 260px; max-width: 420px; min-width: 0;
+  border-radius: 18px; padding: 20px 20px 18px; position: relative; overflow: hidden;
+  background: linear-gradient(165deg, #121a25 0%, #0a0d12 100%);
+  border: 1px solid #1e2835; transition: transform 0.22s ease, box-shadow 0.25s;
+}
+.fc-compare-card::before {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: linear-gradient(150deg, rgba(255,255,255,0.04) 0%, transparent 40%);
+  opacity: 0.5;
+}
+.fc-compare-card:hover { transform: translateY(-3px); }
+.fc-compare-card--random {
+  border-color: #7c2d1244;
+  box-shadow: 0 0 40px -18px #ff4d4d99, 0 12px 32px -18px #000, inset 0 1px 0 #ff4d4d0d;
+}
+.fc-compare-card--random:hover { box-shadow: 0 0 48px -10px #ff4d4d55, 0 16px 40px -16px #000, inset 0 1px 0 #ff4d4d14; }
+.fc-compare-card--trained {
+  border-color: #00d4ff4d;
+  box-shadow:
+    0 0 0 1px rgba(0, 255, 136, 0.1),
+    0 0 50px -16px #00d4ff66,
+    0 0 50px -12px #00ff8840,
+    0 12px 36px -20px #000, inset 0 1px 0 #00d4ff1a;
+}
+.fc-compare-card--trained:hover {
+  box-shadow: 0 0 0 1px rgba(0, 255, 170, 0.15), 0 0 60px -10px #00d4ff80, 0 16px 40px -14px #000, inset 0 1px 0 #00ff8822;
+}
+.fc-compare-h {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 0 16px; position: relative; z-index: 1;
+}
+.fc-compare-h h3 {
+  margin: 0; font-size: 1.1rem; font-weight: 800; letter-spacing: 0.03em; color: #f1f5f9 !important;
+  text-shadow: 0 0 20px currentColor; line-height: 1.2;
+}
+.fc-compare-card--random .fc-compare-h h3 { color: #fb923c !important; text-shadow: 0 0 16px #ff4d4d35; }
+.fc-compare-card--trained .fc-compare-h h3 { color: #4ade80 !important; text-shadow: 0 0 20px #00d4ff44, 0 0 14px #00ff8833; }
+.fc-compare-icon { font-size: 1.75rem; line-height: 1; filter: drop-shadow(0 0 6px #fff3); }
+.fc-compare-metrics { display: flex; flex-direction: column; gap: 12px; position: relative; z-index: 1; }
+.fc-metric {
+  text-align: center; background: #0a0e14aa; border: 1px solid #1e2832; border-radius: 12px; padding: 10px 10px 12px;
+  backdrop-filter: blur(6px);
+}
+.fc-compare-card--random .fc-metric { border-color: #3f2a1f; }
+.fc-compare-card--trained .fc-metric { border-color: #1a3a35; }
+.fc-metric-label { display: block; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #a8b0bc !important; margin-bottom: 4px; }
+.fc-metric-value { display: block; font-size: 1.85rem; font-weight: 800; line-height: 1.1; color: #f8fafc !important; }
+.fc-compare-card--random .fc-metric-value { color: #fecdd3 !important; }
+.fc-compare-card--trained .fc-metric-value { color: #a7f3d0 !important; text-shadow: 0 0 24px #00ff8822; }
+
+.fc-compare-vsplit {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 48px; flex: 0 0 auto; align-self: center;
+  gap: 6px;
+}
+.fc-vs {
+  display: flex; align-items: center; justify-content: center;
+  min-width: 48px; min-height: 48px; border-radius: 12px; font-size: 0.95rem; font-weight: 900; letter-spacing: 0.06em; color: #0b0f14 !important;
+  background: linear-gradient(180deg, #f5c542, #c99a1e);
+  border: 1px solid #fde68a; box-shadow: 0 0 24px -4px #f5c54288, 0 4px 0 #7c5a0a44;
+  text-shadow: 0 1px 0 #fffc; position: relative; z-index: 1;
+}
+.fc-vs-connector { display: none; }
+@media (min-width: 700px) {
+  .fc-vs-connector { display: block; width: 2px; height: 28px; background: linear-gradient(180deg, #f5c542, #00d4ff44); border-radius: 1px; opacity: 0.5; }
+}
+@media (max-width: 699px) {
+  .fc-compare-row { flex-direction: column; align-items: stretch; }
+  .fc-compare-vsplit { flex-direction: row; min-width: 100%; max-width: 100%; padding: 8px 0; gap: 10px; }
+  .fc-compare-vsplit .fc-vs-connector {
+    display: block; flex: 1; height: 2px; min-width: 24px;
+    background: linear-gradient(90deg, #ff4d4d44, #f5c542, #00d4ff55); opacity: 0.55; border-radius: 1px;
+  }
+  .fc-dashboard-title { font-size: 1.2rem; }
+}
+
+.fc-compare-summary {
+  margin: 0 0 8px; padding: 16px 18px; text-align: center; font-size: 1.05rem; line-height: 1.4;
+  font-weight: 800; color: #f0fdf4 !important;
+  background: linear-gradient(90deg, #0a1510, #0a1418, #0a1418); border: 1px solid #14532d; border-radius: 14px;
+  box-shadow: 0 0 40px -20px #00ff8833, inset 0 1px 0 #00ff8822; letter-spacing: 0.01em;
+}
+.fc-compare-summary .fc-snum { color: #4ade80 !important; }
+.fc-compare-foot { font-size: 0.8rem; color: #7c8796 !important; margin: 12px 0 0; }
+.fc-compare-na { color: #94a3b8; font-size: 0.95rem; }
+.fc-dashboard-wrap { max-width: 1000px; margin: 0 auto; }
+.fc-dashboard-grad { padding: 22px 4px; border-radius: 18px; }
+.fc-dashboard-grad--compare {
+  background: linear-gradient(180deg, #0b1422 0%, #0b0f14 55%, #0a0c0f 100%);
+  border: 1px solid #1a222c; box-shadow: inset 0 1px 0 #00d4ff0d, 0 8px 40px -20px #0006;
+  margin: 0 0 8px;
+}
+
+/* About: glass info cards */
+.fc-dashboard-grad--about {
+  background: linear-gradient(180deg, #0a1018, #0b0f14, #0a0c0f);
+  border: 1px solid #1a222c; padding: 8px 4px 4px; margin: 0 0 4px; border-radius: 18px; box-shadow: 0 8px 32px -18px #0005;
+}
+.fc-about-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 0; }
+@media (max-width: 900px) { .fc-about-grid { grid-template-columns: 1fr; } }
+.fc-glass {
+  position: relative; border-radius: 16px; padding: 20px 18px 20px; overflow: hidden; min-height: 0;
+  background: rgba(18, 24, 34, 0.45);
+  border: 1px solid rgba(0, 212, 255, 0.14);
+  box-shadow: 0 8px 32px -16px #000, inset 0 1px 0 rgba(255,255,255,0.06);
+  backdrop-filter: blur(10px) saturate(120%);
+  -webkit-backdrop-filter: blur(10px) saturate(120%);
+  transition: transform 0.22s ease, border-color 0.2s, box-shadow 0.25s;
+}
+.fc-glass::before {
+  content: ""; position: absolute; inset: 0; background: linear-gradient(135deg, #00d4ff08, transparent 55%); pointer-events: none;
+}
+.fc-glass:hover { transform: translateY(-3px) scale(1.01); border-color: #00d4ff33; box-shadow: 0 12px 40px -18px #000, 0 0 32px -12px #00d4ff2a, inset 0 1px 0 #fff0; }
+.fc-glass-h {
+  display: flex; align-items: center; gap: 10px; margin: 0 0 12px; position: relative; z-index: 1; border-bottom: 1px solid #00d4ff1a; padding-bottom: 10px;
+}
+.fc-glass-ico { font-size: 1.5rem; line-height: 1; }
+.fc-glass-t { margin: 0; font-size: 1.05rem; font-weight: 800; color: #f1f5f9 !important; letter-spacing: 0.04em; text-shadow: 0 0 18px #00d4ff1a; }
+.fc-glass ul { list-style: none; margin: 0; padding: 0; position: relative; z-index: 1; }
+.fc-glass li { margin: 0; padding: 7px 0; padding-left: 0; color: #e2e8f0 !important; font-size: 0.95rem; line-height: 1.45; border-top: 1px solid #ffffff0a; }
+.fc-glass li:first-of-type { border-top: 0; padding-top: 0; }
+.fc-glass li::before { content: "· "; color: #f5c542; font-weight: 900; margin-right: 4px; }
 """
 
 STATIC_HEADER = """
 <div class="fc-game-header">
   <h1>FC Decision Lab</h1>
   <p class="fc-sub">Reveal clues strategically. Spend tokens wisely.</p>
+</div>
+"""
+
+
+def _load_evaluation_json() -> dict:
+    p = Path(__file__).resolve().parent / "artifacts" / "evaluation.json"
+    try:
+        with p.open(encoding="utf-8") as f:
+            return json.load(f)
+    except (OSError, json.JSONDecodeError, TypeError):
+        return {}
+
+
+def _fmetric_win(x: object | None) -> str:
+    if x is None or not isinstance(x, (int, float)):
+        return "—"
+    return f"{float(x) * 100:.1f}%"
+
+
+def _fmetric_reward(x: object | None) -> str:
+    if x is None or not isinstance(x, (int, float)):
+        return "—"
+    v = float(x)
+    s = f"{v:+.3f}"
+    return s
+
+
+def _fmetric_steps(x: object | None) -> str:
+    if x is None or not isinstance(x, (int, float)):
+        return "—"
+    return f"{float(x):.2f}"
+
+
+def _compare_panel_html() -> str:
+    data = _load_evaluation_json()
+    _r = data.get("random_eval")
+    rdict: dict = _r if isinstance(_r, dict) else {}
+    if isinstance(data.get("ppo_eval"), dict) and data["ppo_eval"]:
+        tdict: dict = data["ppo_eval"]
+        trained_name = "PPO"
+    elif isinstance(data.get("q_tabular_eval"), dict) and data.get("q_tabular_eval"):
+        tdict = data["q_tabular_eval"]
+        trained_name = "Q-table"
+    else:
+        tdict = {}
+        trained_name = "Trained"
+
+    wr = rdict.get("win_rate")
+    wtr = tdict.get("win_rate")
+    if (
+        wr is not None
+        and wtr is not None
+        and isinstance(wr, (int, float))
+        and isinstance(wtr, (int, float))
+    ):
+        dpp = (float(wtr) - float(wr)) * 100.0
+        if dpp >= 0:
+            summary = (
+                f"Trained agent outperforms random by "
+                f'<span class="fc-snum">+{dpp:.1f}</span> percentage points in win rate.'
+            )
+        else:
+            summary = (
+                f"Win rate (trained &minus; random): <span class=\"fc-snum\">{dpp:+.1f}</span> points."
+            )
+    else:
+        summary = (
+            "Run <code>python train.py</code> to build <code>artifacts/evaluation.json</code> "
+            "and populate this panel."
+        )
+        summary = f'<span class="fc-compare-na">{summary}</span>'
+
+    foot = ""
+    if data and rdict and tdict:
+        foot = (
+            f'<p class="fc-compare-foot">Source: <code>artifacts/evaluation.json</code> &middot; '
+            f"Trained metrics: {trained_name}</p>"
+        )
+    return f"""<div class="fc-tab-dashboard fc-dashboard-wrap">
+<div class="fc-dashboard-grad fc-dashboard-grad--compare">
+  <h2 class="fc-dashboard-title">Trained vs Random</h2>
+  <p class="fc-dashboard-sub">Side-by-side results from the same environment. Bigger is better for win rate and average reward; steps depend on your strategy.</p>
+  <div class="fc-compare-arena">
+    <div class="fc-compare-row">
+      <div class="fc-compare-card fc-compare-card--random" role="group" aria-label="Random policy">
+        <div class="fc-compare-h">
+          <h3>Random Policy</h3>
+          <span class="fc-compare-icon" title="dice" aria-hidden="true">🎲</span>
+        </div>
+        <div class="fc-compare-metrics">
+          <div class="fc-metric">
+            <span class="fc-metric-label">Win rate</span>
+            <span class="fc-metric-value">{_fmetric_win(rdict.get("win_rate"))}</span>
+          </div>
+          <div class="fc-metric">
+            <span class="fc-metric-label">Avg reward</span>
+            <span class="fc-metric-value">{_fmetric_reward(rdict.get("avg_reward"))}</span>
+          </div>
+          <div class="fc-metric">
+            <span class="fc-metric-label">Avg steps</span>
+            <span class="fc-metric-value">{_fmetric_steps(rdict.get("avg_steps"))}</span>
+          </div>
+        </div>
+      </div>
+      <div class="fc-compare-vsplit" aria-hidden="true">
+        <div class="fc-vs-connector"></div>
+        <div class="fc-vs">VS</div>
+        <div class="fc-vs-connector"></div>
+      </div>
+      <div class="fc-compare-card fc-compare-card--trained" role="group" aria-label="Trained policy">
+        <div class="fc-compare-h">
+          <h3>Trained Policy</h3>
+          <span class="fc-compare-icon" title="trained" aria-hidden="true">🧠<span style="font-size:0.85em">⚡</span></span>
+        </div>
+        <div class="fc-compare-metrics">
+          <div class="fc-metric">
+            <span class="fc-metric-label">Win rate</span>
+            <span class="fc-metric-value">{_fmetric_win(tdict.get("win_rate"))}</span>
+          </div>
+          <div class="fc-metric">
+            <span class="fc-metric-label">Avg reward</span>
+            <span class="fc-metric-value">{_fmetric_reward(tdict.get("avg_reward"))}</span>
+          </div>
+          <div class="fc-metric">
+            <span class="fc-metric-label">Avg steps</span>
+            <span class="fc-metric-value">{_fmetric_steps(tdict.get("avg_steps"))}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="fc-compare-summary">{summary}</p>
+  {foot}
+</div>
+</div>"""
+
+ABOUT_PANEL_HTML = r"""
+<div class="fc-tab-dashboard fc-dashboard-wrap">
+  <div class="fc-dashboard-grad fc-dashboard-grad--about">
+    <h2 class="fc-dashboard-title">About this lab</h2>
+    <p class="fc-dashboard-sub" style="margin-bottom: 18px;">Scannable quick reference. Same rules and API as the <strong>Play</strong> tab—only the presentation differs.</p>
+    <div class="fc-about-grid">
+      <article class="fc-glass" role="region" aria-label="Goal">
+        <div class="fc-glass-h">
+          <span class="fc-glass-ico" aria-hidden="true">🎯</span>
+          <h3 class="fc-glass-t">Goal</h3>
+        </div>
+        <ul>
+          <li>Manage a fixed token budget</li>
+          <li>Reveal clues to learn about the pick</li>
+          <li>Decide: commit, or refresh the candidate</li>
+        </ul>
+      </article>
+      <article class="fc-glass" role="region" aria-label="Actions">
+        <div class="fc-glass-h">
+          <span class="fc-glass-ico" aria-hidden="true">⚙️</span>
+          <h3 class="fc-glass-t">Actions</h3>
+        </div>
+        <ul>
+          <li><strong>Reveal Low</strong> — cheap information</li>
+          <li><strong>Reveal High</strong> — pricier, higher signal</li>
+          <li><strong>Commit</strong> — lock in your final decision</li>
+          <li><strong>Refresh</strong> — end episode and skip the candidate (alias: skip)</li>
+        </ul>
+      </article>
+      <article class="fc-glass" role="region" aria-label="Strategy">
+        <div class="fc-glass-h">
+          <span class="fc-glass-ico" aria-hidden="true">🧠</span>
+          <h3 class="fc-glass-t">Strategy</h3>
+        </div>
+        <ul>
+          <li>Balance cost against information</li>
+          <li>Don’t burn tokens for no gain</li>
+          <li>Commit when you are confident, refresh when the profile looks wrong</li>
+        </ul>
+      </article>
+    </div>
+  </div>
 </div>
 """
 
@@ -1013,29 +1337,11 @@ def build_blocks() -> gr.Blocks:
                 )
 
             with gr.Tab("Compare"):
-                with gr.Group(elem_classes="content-card"):
-                    gr.Markdown(
-                        '<div class="section-title">Trained vs random</div>\n\n'
-                        "The environment supports **policy evaluation**: a **random** policy "
-                        "picks a legal action at random. A **trained** policy (e.g. tabular Q-learning "
-                        "or PPO in `train.py`) optimizes for cumulative reward and win rate against that "
-                        "baseline.\n\n"
-                        "Training writes metrics under `artifacts/`. Run `python train.py` locally to "
-                        "reproduce curves. The **API** here stays the same; only the **policy** changes.",
-                        sanitize_html=False,
-                    )
+                gr.HTML(
+                    _compare_panel_html(), elem_classes=["fc-tab-compare"]
+                )
 
             with gr.Tab("About"):
-                with gr.Group(elem_classes="content-card"):
-                    gr.Markdown(
-                        '<div class="section-title">About this lab</div>\n\n'
-                        "You manage a **token budget** and choose **low-cost** versus **high-cost** clues. "
-                        "Reveals fill the six **clue** cards; hidden slots show **???** until you pay to "
-                        "reveal them. When you **commit** or **refresh** (the previous **skip**), the episode "
-                        "ends; rewards reflect how well you read the situation. This interface uses the same "
-                        "**step** logic as the Space **API** — the front end is only here for a clear, "
-                        "decision-first experience.",
-                        sanitize_html=False,
-                    )
+                gr.HTML(ABOUT_PANEL_HTML, elem_classes=["fc-tab-about"])
 
     return demo
