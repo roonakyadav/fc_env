@@ -54,6 +54,10 @@ class FCEnvEnvironment:
         self._update_state()
         return self._observation(reward=0.0)
 
+    @staticmethod
+    def _token_ratio(tokens: int) -> float:
+        return max(0.0, min(1.0, tokens / 100.0))
+
     def step(self, action: Action) -> Observation:
         if self.done:
             return self._observation(reward=0.0)
@@ -72,16 +76,16 @@ class FCEnvEnvironment:
         elif act == 2:
             self.done = True
             self._step_count += 1
-            dense_reward -= 0.05
+            dense_reward -= 0.02
         elif act == 3:
             self.done = True
             self.last_action_was_skip = True
             self._step_count += 1
-            dense_reward += 0.10 if self.is_trap else -0.20
+            dense_reward += 0.0
 
         if self.tokens <= 0:
             self.done = True
-            dense_reward -= 0.10
+            dense_reward -= 0.18
         if self._step_count >= self.max_steps:
             self.done = True
         if all(self.low_revealed) and all(self.high_revealed):
@@ -126,18 +130,20 @@ class FCEnvEnvironment:
         unrevealed = [i for i, is_shown in enumerate(self.low_revealed) if not is_shown]
         if not unrevealed:
             self.tokens -= 2
-            return -0.10
+            # Wasting a reveal action on an exhausted low-cost clue bucket.
+            return -0.14
         index = random.choice(unrevealed)
         self.low_revealed[index] = True
         self.tokens -= 5
         self._step_count += 1
-        return 0.08
+        # Information has explicit cost; reveals should never be free reward.
+        return -0.04
 
     def _reveal_high_clue(self) -> float:
         unrevealed = [i for i, is_shown in enumerate(self.high_revealed) if not is_shown]
         if not unrevealed:
             self.tokens -= 5
-            return -0.15
+            return -0.22
         remaining = len(unrevealed)
         if remaining == 3:
             cost = 15
@@ -149,28 +155,37 @@ class FCEnvEnvironment:
         self.high_revealed[index] = True
         self.tokens -= cost
         self._step_count += 1
-        # Reward richer clues but discourage over-spending.
-        return 0.15 - (cost / 200.0)
+        # High clues provide richer evidence but are intentionally expensive.
+        return -(cost / 125.0)
 
     def _terminal_reward(self) -> float:
         revealed = sum(self.low_revealed) + sum(self.high_revealed)
-        if revealed < 2:
-            return -1.0
-        if self.last_action_was_skip:
-            return 1.0 if self.is_trap else -1.0
-
         quality = self._estimated_quality()
-        if self.is_trap:
-            # Trap cards should be skipped; committing resources is penalized.
-            return -0.6 + (self.tokens / 200.0) - (revealed / 20.0)
+        token_ratio = self._token_ratio(self.tokens)
+        info_ratio = min(1.0, revealed / 6.0)
 
-        score = 0.0
-        score += 0.6 * quality
-        score += self.tokens / 120.0
-        score += 0.2 if sum(self.high_revealed) >= 1 else -0.1
+        if self.last_action_was_skip:
+            # Skip is context-dependent: strong for traps, situational otherwise.
+            if self.is_trap:
+                score = 0.45 + (0.30 * token_ratio) + (0.10 * (1.0 - info_ratio))
+            else:
+                score = -0.25 - (0.45 * quality) + (0.25 * token_ratio) + (0.20 * info_ratio)
+            return max(-1.2, min(1.25, score))
+
+        if self.is_trap:
+            # Committing trap cards should be consistently negative.
+            score = -0.70 - (0.35 * (1.0 - token_ratio)) - (0.08 * revealed)
+            return max(-1.2, min(1.25, score))
+
+        # Non-trap commit: quality + efficiency matter most.
+        score = -0.35
+        score += 0.75 * quality
+        score += 0.55 * token_ratio
+        score += 0.12 if sum(self.high_revealed) >= 1 else -0.06
+        score += 0.06 if revealed >= 2 else -0.08
         if revealed >= 5:
-            score -= 0.1
-        return max(-1.5, min(2.0, score))
+            score -= 0.12
+        return max(-1.2, min(1.25, score))
 
     def _estimated_quality(self) -> float:
         ovr = self.player.ovr

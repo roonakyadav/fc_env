@@ -1,10 +1,13 @@
 {
-  "attempt_used": 1,
-  "baseline_reward": -0.6953,
-  "trained_reward": 0.7724,
-  "reward_delta": 1.4677,
-  "baseline_win_rate": 0.1333,
-  "trained_win_rate": 0.68,
-  "win_rate_delta": 0.5467,
+  "attempt_used": 2,
+  "baseline_reward": -0.0949,
+  "trained_reward": 0.1949,
+  "reward_delta": 0.2898,
+  "baseline_win_rate": 0.39,
+  "trained_win_rate": 0.6867,
+  "baseline_avg_tokens_used": 10.21,
+  "trained_avg_tokens_used": 0.0,
+  "tokens_used_delta": -10.21,
+  "win_rate_delta": 0.2967,
   "sb3_model_path": "models/final_model.zip"
 }

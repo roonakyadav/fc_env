@@ -70,7 +70,7 @@ def q_policy_action(obs, q_table: dict[tuple, float]) -> int:
     return max(range(4), key=lambda a: q_table.get((key, a), 0.0))
 
 
-def run_policy_episode(env: FCEnvEnvironment, policy_fn) -> tuple[float, bool]:
+def run_policy_episode(env: FCEnvEnvironment, policy_fn) -> tuple[float, bool, int]:
     obs = env.reset()
     total_reward = 0.0
     done = False
@@ -79,17 +79,20 @@ def run_policy_episode(env: FCEnvEnvironment, policy_fn) -> tuple[float, bool]:
         obs = env.step(Action(action=action))
         total_reward += obs.reward
         done = obs.done
-    return total_reward, total_reward > 0.0
+    tokens_used = max(0, 100 - int(obs.tokens))
+    return total_reward, total_reward > 0.0, tokens_used
 
 
-def evaluate_policy(env: FCEnvEnvironment, policy_fn, episodes: int) -> tuple[float, float]:
+def evaluate_policy(env: FCEnvEnvironment, policy_fn, episodes: int) -> tuple[float, float, float]:
     rewards = []
+    tokens_used = []
     wins = 0
     for _ in range(episodes):
-        reward, won = run_policy_episode(env, policy_fn)
+        reward, won, tok = run_policy_episode(env, policy_fn)
         rewards.append(reward)
+        tokens_used.append(tok)
         wins += int(won)
-    return sum(rewards) / len(rewards), wins / episodes
+    return sum(rewards) / len(rewards), wins / episodes, (sum(tokens_used) / len(tokens_used))
 
 
 def _save_q_table(q: dict[tuple, float]) -> None:
@@ -124,7 +127,9 @@ def run_training_pipeline(seed: int = 42) -> dict:
         rewards = []
         wins = []
 
-        baseline_reward, baseline_win_rate = evaluate_policy(env, lambda _: random_policy_action(), EVAL_EPISODES)
+        baseline_reward, baseline_win_rate, baseline_tokens_used = evaluate_policy(
+            env, lambda _: random_policy_action(), EVAL_EPISODES
+        )
 
         with open(METRICS_CSV, "w", newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
@@ -160,7 +165,7 @@ def run_training_pipeline(seed: int = 42) -> dict:
                 ww = wins[-50:]
                 writer.writerow([episode, total_reward, sum(rw) / len(rw), sum(ww) / len(ww)])
 
-        trained_reward, trained_win_rate = evaluate_policy(
+        trained_reward, trained_win_rate, trained_tokens_used = evaluate_policy(
             env, lambda obs: q_policy_action(obs, q), EVAL_EPISODES
         )
         reward_delta = trained_reward - baseline_reward
@@ -169,8 +174,10 @@ def run_training_pipeline(seed: int = 42) -> dict:
             "q": dict(q),
             "baseline_reward": baseline_reward,
             "baseline_win_rate": baseline_win_rate,
+            "baseline_tokens_used": baseline_tokens_used,
             "trained_reward": trained_reward,
             "trained_win_rate": trained_win_rate,
+            "trained_tokens_used": trained_tokens_used,
             "reward_delta": reward_delta,
             "win_delta": win_delta,
             "rewards": rewards,
@@ -221,6 +228,9 @@ def run_training_pipeline(seed: int = 42) -> dict:
         "reward_delta": round(best["reward_delta"], 4),
         "baseline_win_rate": round(best["baseline_win_rate"], 4),
         "trained_win_rate": round(best["trained_win_rate"], 4),
+        "baseline_avg_tokens_used": round(best["baseline_tokens_used"], 2),
+        "trained_avg_tokens_used": round(best["trained_tokens_used"], 2),
+        "tokens_used_delta": round(best["trained_tokens_used"] - best["baseline_tokens_used"], 2),
         "win_rate_delta": round(best["win_delta"], 4),
     }
     # Neural PPO (SB3) for models/final_model.zip; reward still comes only from the environment.
