@@ -1,3 +1,22 @@
+---
+title: FC OpenEnv
+emoji: 🃏
+colorFrom: blue
+colorTo: indigo
+sdk: docker
+python_version: "3.12"
+app_port: 7860
+base_path: /ui
+short_description: "OpenEnv-style RL — costly probes, commit or exit. FastAPI API + Gradio UI."
+pinned: false
+tags:
+  - reinforcement-learning
+  - openenv
+  - environment
+  - fastapi
+  - gradio
+---
+
 # FC OpenEnv — Due diligence under a probe budget (OpenEnv + HF Space)
 
 ## 🧠 Intuition (read this first)
