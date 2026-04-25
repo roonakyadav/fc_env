@@ -406,6 +406,22 @@ button.gr-button.fc-btn--commit:hover:enabled, .gr-button.fc-btn--commit:hover:e
 .fc-reward-neu { color: #d1d5db !important; font-weight: 600; }
 .fc-oneline-log { font-size: 0.95rem; color: #e5e7eb; margin: 0 0 6px; line-height: 1.45; }
 
+/* Episode trace (step-by-step, below Last action) */
+.fc-trace-outer { margin-top: 10px; }
+.fc-trace-panel {
+  background: #101820; border: 1px solid #243142; border-radius: 12px; padding: 16px 18px;
+  margin: 0; font-family: "JetBrains Mono", "SFMono-Regular", ui-monospace, Menlo, monospace;
+  font-size: 0.88rem; line-height: 1.5; color: #e2e8f0; box-shadow: inset 0 1px 0 #ffffff0a;
+}
+.fc-trace-title { margin: 0 0 10px; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: #94a3b8 !important; font-weight: 800; }
+.fc-trace-empty { margin: 0; color: #6b7c8b !important; }
+.fc-trace-lines { display: flex; flex-direction: column; gap: 6px; }
+.fc-trace-line { padding: 2px 0; }
+.fc-trace-pos { color: #00ff88 !important; font-weight: 700; }
+.fc-trace-neg { color: #ff4d4d !important; font-weight: 700; }
+.fc-trace-neu { color: #cbd5e1 !important; font-weight: 600; }
+.fc-trace-final { margin-top: 12px; padding-top: 10px; border-top: 1px solid #1e2a3a; font-weight: 800; }
+
 /* History cards */
 .gr-accordion, details.gr-accordion { background: #0b0f14 !important; border: none; }
 summary { color: #e5e7eb; font-weight: 700; letter-spacing: 0.02em; }
@@ -1246,6 +1262,73 @@ def _log_to_html(h: dict | None) -> str:
     return "".join(parts)
 
 
+TRACE_ACTION_EMOJI: dict[str, str] = {
+    "Reveal Low": "🟦",
+    "Reveal High": "🟨",
+    "Commit": "✅",
+    "Refresh": "🔄",
+}
+
+
+def _append_episode_trace(
+    prior: list[dict] | list | None,
+    o,
+) -> list[dict]:
+    info = getattr(o, "info", None) or {}
+    an = info.get("action_name", "")
+    if an in ("", "—", None):
+        return list(prior or [])
+    row = {
+        "step": int(info.get("step_number", o.step_number)),
+        "action": str(an),
+        "reward": float(info.get("step_reward", o.reward)),
+    }
+    return list(prior or []) + [row]
+
+
+def _episode_trace_html(rows: list[dict] | list | None, episode_done: bool) -> str:
+    rows = list(rows or [])
+    if not rows and not episode_done:
+        body = '<p class="fc-trace-empty">No actions taken yet.</p>'
+    else:
+        lines: list[str] = []
+        for r in rows:
+            emo = TRACE_ACTION_EMOJI.get(r["action"], "•")
+            rw = float(r["reward"])
+            if rw > 1e-9:
+                rs, ccls = f"+{rw:.2f}", "fc-trace-pos"
+            elif rw < -1e-9:
+                rs, ccls = f"{rw:.2f}", "fc-trace-neg"
+            else:
+                rs, ccls = f"{rw:.2f}", "fc-trace-neu"
+            an_esc = _html_escape(str(r.get("action", "—")))
+            stn = int(r.get("step", 0))
+            lines.append(
+                f'<div class="fc-trace-line">Step {stn} → {emo} {an_esc} → <span class="{ccls}">{rs}</span></div>'
+            )
+        body = '<div class="fc-trace-lines">' + "".join(lines) + "</div>"
+    final = ""
+    if episode_done and rows:
+        tot = sum(float(x["reward"]) for x in rows)
+        if tot > 1e-9:
+            ts, tcls = f"+{tot:.2f}", "fc-trace-pos"
+        elif tot < -1e-9:
+            ts, tcls = f"{tot:.2f}", "fc-trace-neg"
+        else:
+            ts, tcls = f"{tot:.2f}", "fc-trace-neu"
+        final = (
+            f'<div class="fc-trace-final">'
+            f'<div style="margin-bottom:4px; font-size:0.7rem; color:#7c8a9c; text-transform:uppercase; letter-spacing:0.08em; font-weight:800;">Final result</div>'
+            f"Total reward: <span class=\"{tcls}\">{ts}</span></div>"
+        )
+    return (
+        '<div class="fc-trace-panel">'
+        '<h3 class="fc-trace-title">Episode History</h3>'
+        f"{body}{final}"
+        "</div>"
+    )
+
+
 def build_blocks() -> gr.Blocks:
     with gr.Blocks(
         title="FC Decision Lab",
@@ -1256,6 +1339,7 @@ def build_blocks() -> gr.Blocks:
             with gr.Tab("Play"):
                 st = gr.State()  # type: ignore[var-annotated]  # { "env", "pre_obs" }
                 history_state = gr.State(HISTORY_STATE_INIT)  # type: ignore[var-annotated]
+                episode_trace = gr.State([])  # type: ignore[var-annotated]  # list[dict] step log
 
                 gr.HTML(STATIC_HEADER, elem_classes=["fc-hgame"])
 
@@ -1297,6 +1381,9 @@ def build_blocks() -> gr.Blocks:
                     "<h3>Last action</h3><p class='fc-mute' style='margin:0'>"
                     "No action yet. Start a new episode.</p></div>"
                 )
+                episode_trace_display = gr.HTML(
+                    _episode_trace_html([], False), elem_classes=["fc-trace-outer"]
+                )
                 flow = gr.HTML(
                     "<p class='fc-flow-line' style='color:#6b7c8a; margin:0;'>"
                     "Press <strong>Start new episode</strong> to begin.</p>"
@@ -1309,8 +1396,10 @@ def build_blocks() -> gr.Blocks:
                 _out_play = [
                     st,
                     history_state,
+                    episode_trace,
                     card_block,
                     last_block,
+                    episode_trace_display,
                     flow,
                     footer_status,
                     history_display,
@@ -1319,7 +1408,7 @@ def build_blocks() -> gr.Blocks:
                     b_skip,
                     b_commit,
                 ]
-                n_out = 12
+                n_out = 14
                 n_skip_updates = n_out - 1
 
                 def on_start() -> tuple:
@@ -1335,15 +1424,18 @@ def build_blocks() -> gr.Blocks:
                     }
                     h_html = _log_to_html(h0)
                     bup = _button_state_from_obs(o)
+                    tr_empty: list[dict] = []
                     return (
                         s0,
                         h0,
+                        tr_empty,
                         _render_six_clues(o.revealed_clues, None),
                         _last_step_html(
                             o,
                             "Episode started — your move.",
                             None,
                         ),
+                        _episode_trace_html(tr_empty, False),
                         _flow_badge(o, None),
                         _play_footer_html(o),
                         h_html,
@@ -1353,6 +1445,7 @@ def build_blocks() -> gr.Blocks:
                     s: dict | None,
                     user_action: int,
                     hist: dict | None,
+                    ep_tr: list | None,
                 ) -> tuple:
                     if not s or s.get("env") is None:
                         return (s,) + (gr.update(),) * n_skip_updates
@@ -1371,15 +1464,18 @@ def build_blocks() -> gr.Blocks:
                     bup = _button_state_from_obs(o)
                     h_new = _log_after_step(hist, user_action, o)
                     h_html = _log_to_html(h_new)
+                    new_tr = _append_episode_trace(ep_tr, o)
                     return (
                         next_s,
                         h_new,
+                        new_tr,
                         _render_six_clues(o.revealed_clues, new_idx),
                         _last_step_html(
                             o,
                             _outcome_text(user_action, pre_dict, o, new_idx),
                             user_action,
                         ),
+                        _episode_trace_html(new_tr, o.done),
                         _flow_badge(o, user_action),
                         _play_footer_html(o),
                         h_html,
@@ -1391,23 +1487,23 @@ def build_blocks() -> gr.Blocks:
                     outputs=_out_play,
                 )
                 b_low.click(
-                    lambda s, h: on_step(s, 0, h),
-                    inputs=[st, history_state],
+                    lambda s, h, t: on_step(s, 0, h, t),
+                    inputs=[st, history_state, episode_trace],
                     outputs=_out_play,
                 )
                 b_high.click(
-                    lambda s, h: on_step(s, 1, h),
-                    inputs=[st, history_state],
+                    lambda s, h, t: on_step(s, 1, h, t),
+                    inputs=[st, history_state, episode_trace],
                     outputs=_out_play,
                 )
                 b_commit.click(
-                    lambda s, h: on_step(s, 2, h),
-                    inputs=[st, history_state],
+                    lambda s, h, t: on_step(s, 2, h, t),
+                    inputs=[st, history_state, episode_trace],
                     outputs=_out_play,
                 )
                 b_skip.click(
-                    lambda s, h: on_step(s, 3, h),
-                    inputs=[st, history_state],
+                    lambda s, h, t: on_step(s, 3, h, t),
+                    inputs=[st, history_state, episode_trace],
                     outputs=_out_play,
                 )
 

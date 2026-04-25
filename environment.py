@@ -5,6 +5,14 @@ from uuid import uuid4
 
 from models import Action, Observation, State
 
+# Display names for step().info (matches Gradio)
+STEP_ACTION_NAMES: dict[int, str] = {
+    0: "Reveal Low",
+    1: "Reveal High",
+    2: "Commit",
+    3: "Refresh",
+}
+
 
 @dataclass(frozen=True)
 class PlayerProfile:
@@ -40,7 +48,15 @@ class FCEnvEnvironment:
 
     def step(self, action: Action) -> Observation:
         if self.done:
-            return self._observation(0.0)
+            return self._observation(
+                0.0,
+                {
+                    "action_name": "—",
+                    "step_reward": 0.0,
+                    "tokens_left": int(self.tokens),
+                    "step_number": int(self._step_count),
+                },
+            )
 
         act = action.action
         reward = 0.0
@@ -74,7 +90,13 @@ class FCEnvEnvironment:
 
         self.tokens = max(self.tokens, 0)
         self._update_state()
-        return self._observation(reward)
+        info = {
+            "action_name": STEP_ACTION_NAMES.get(act, f"Action {act}"),
+            "step_reward": float(reward),
+            "tokens_left": int(self.tokens),
+            "step_number": int(self._step_count),
+        }
+        return self._observation(reward, info)
 
     def state(self) -> State:
         return self.state_snapshot
@@ -260,7 +282,8 @@ class FCEnvEnvironment:
         high = [str(self.high_clues[i]) if self.high_revealed[i] else "HIDDEN" for i in range(3)]
         return low + high
 
-    def _observation(self, reward):
+    def _observation(self, reward, step_info: dict | None = None):
+        inf: dict = {} if step_info is None else dict(step_info)
         return Observation(
             revealed_clues=tuple(self._visible_clues()),
             tokens=self.tokens,
@@ -269,6 +292,7 @@ class FCEnvEnvironment:
             high_remaining=self.high_revealed.count(False),
             done=self.done,
             reward=float(reward),
+            info=inf,
         )
 
     def _update_state(self):

@@ -22,6 +22,7 @@ class ObservationResponseModel(BaseModel):
     high_remaining: int
     done: bool
     reward: float
+    info: dict[str, Any] = Field(default_factory=dict)
 
 
 class StateResponseModel(BaseModel):
@@ -74,6 +75,7 @@ def create_fastapi_app(
             "high_remaining": o.high_remaining,
             "done": o.done,
             "reward": o.reward,
+            "info": dict(getattr(o, "info", {})),
         }
 
     @app.get(

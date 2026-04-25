@@ -1,5 +1,5 @@
-from dataclasses import dataclass
-from typing import Tuple
+from dataclasses import dataclass, field
+from typing import Any, Tuple
 
 
 @dataclass(frozen=True)
@@ -20,6 +20,8 @@ class Observation:
     high_remaining: int
     done: bool
     reward: float
+    # Per-step metadata (empty on reset / no-op when already done)
+    info: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)

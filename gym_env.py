@@ -59,4 +59,4 @@ class FCOpenEnvGym(gym.Env):
         o = self._env.step(Action(action=int(action)))
         v = self._vec(o)
         term = bool(o.done)
-        return v, float(o.reward), term, False, {}
+        return v, float(o.reward), term, False, dict(getattr(o, "info", {}))
