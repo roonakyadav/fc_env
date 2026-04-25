@@ -1,0 +1,10 @@
+{
+  "attempt_used": 1,
+  "baseline_reward": -0.6953,
+  "trained_reward": 0.7724,
+  "reward_delta": 1.4677,
+  "baseline_win_rate": 0.1333,
+  "trained_win_rate": 0.68,
+  "win_rate_delta": 0.5467,
+  "sb3_model_path": "models/final_model.zip"
+}

@@ -1,0 +1,52 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fc-openenv"
+version = "0.1.0"
+description = "FIFA/FC card clue-budgeting OpenEnv with shaped rewards, Gymnasium, and ASGI service."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "BSD-3-Clause" }
+dependencies = [
+  "gradio>=4.44.0",
+  "gymnasium>=0.29.0",
+  "numpy>=1.26.0",
+  "matplotlib>=3.9.0",
+  "fastapi>=0.110.0",
+  "uvicorn[standard]>=0.27.0",
+  "pydantic>=2.0.0",
+  "stable-baselines3>=2.2.0",
+  "torch>=2.0.0,<2.6",
+]
+# For a smaller install (CPU), install with:
+#   pip install --extra-index-url https://download.pytorch.org/whl/cpu -e .
+
+[project.optional-dependencies]
+client = ["httpx>=0.27.0"]
+trl = [
+  "trl>=0.9.0",
+  "transformers>=4.40.0",
+  "accelerate>=0.30.0",
+  "peft>=0.10.0",
+]
+
+[project.scripts]
+fc-train = "train:main"
+
+[tool.setuptools.packages.find]
+include = ["core*", "server*"]
+
+[tool.setuptools]
+py-modules = [
+  "app",
+  "models",
+  "environment",
+  "train",
+  "client",
+  "gradio_ui",
+  "gym_env",
+  "benchmark",
+  "kernel_sandbox",
+]

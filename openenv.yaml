@@ -1,0 +1,11 @@
+# OpenEnv-style metadata (see RULES3 / openenv init template)
+name: fc-openenv
+version: 0.1.0
+entrypoint: app:app
+description: FC card clue-budgeting environment with OpenEnv API and Gradio UI
+python: ">=3.10"
+server:
+  host: 0.0.0.0
+  # Hugging Face Spaces set PORT; default 7860
+  port: 7860
+  command: "uvicorn app:app --host 0.0.0.0 --port $PORT"

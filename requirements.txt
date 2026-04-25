@@ -1,6 +1,15 @@
-gradio>=4.0.0
-gymnasium>=0.29.0
-numpy>=1.19.0
+# CPU PyTorch (smaller wheels for HF Spaces)
+--extra-index-url https://download.pytorch.org/whl/cpu
+
+# Space runtime: API + UI
+fastapi>=0.110.0
+uvicorn[standard]>=0.27.0
 pydantic>=2.0.0
-stable-baselines3>=2.0.0
-torch>=2.0.0
+gradio>=4.44.0
+gymnasium>=0.29.0
+numpy>=1.26.0
+
+# Training / comparison tab (lazy-imported; keep for Retrain + plots)
+matplotlib>=3.9.0
+stable-baselines3>=2.2.0
+torch>=2.0.0,<2.6

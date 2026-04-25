@@ -1,0 +1,11 @@
+.git
+.gitignore
+.venv
+__pycache__
+*.pyc
+.DS_Store
+.cursor
+terminals
+RULES*.md
+HF_RULES.md
+agent-transcripts
