@@ -55,6 +55,7 @@ class FCEnvEnvironment:
                     "step_reward": 0.0,
                     "step_number": int(self._step_count),
                     "action_name": "—",
+                    "reason": "",
                 },
             )
 
@@ -91,13 +92,29 @@ class FCEnvEnvironment:
         self.tokens = max(self.tokens, 0)
         self._update_state()
         # info: step_reward and counts for API / Live Stats UI (reward math unchanged)
+        reason = self._get_reward_reason(act, float(reward))
         info = {
             "tokens_left": int(self.tokens),
             "step_reward": float(reward),
             "step_number": int(self._step_count),
             "action_name": STEP_ACTION_NAMES.get(act, f"Action {act}"),
+            "reason": reason,
         }
         return self._observation(reward, info)
+
+    def _get_reward_reason(self, action: int, reward: float) -> str:
+        """Short UI explanation; does not change reward values."""
+        if action == 0:  # Reveal Low
+            return "Cheap info gained"
+        if action == 1:  # Reveal High
+            return "Strong signal (higher cost)"
+        if action == 2:  # Commit
+            if reward > 0:
+                return "Correct decision"
+            return "Bad commit timing"
+        if action == 3:  # Refresh
+            return "Skipped candidate (penalty applied)"
+        return ""
 
     def state(self) -> State:
         return self.state_snapshot

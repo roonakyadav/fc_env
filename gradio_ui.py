@@ -441,7 +441,10 @@ button.gr-button.fc-btn--commit:hover:enabled, .gr-button.fc-btn--commit:hover:e
 .fc-trace-title { margin: 0 0 10px; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: #94a3b8 !important; font-weight: 800; }
 .fc-trace-empty { margin: 0; color: #6b7c8b !important; }
 .fc-trace-lines { display: flex; flex-direction: column; gap: 6px; }
+.fc-trace-step { margin-bottom: 10px; }
+.fc-trace-step:last-of-type { margin-bottom: 0; }
 .fc-trace-line { padding: 2px 0; }
+.fc-trace-reason { font-size: 0.78rem; color: #7c8b9e !important; margin: 3px 0 0; padding: 0 0 0 0.9rem; line-height: 1.4; }
 .fc-trace-pos { color: #00ff88 !important; font-weight: 700; }
 .fc-trace-neg { color: #ff4d4d !important; font-weight: 700; }
 .fc-trace-neu { color: #cbd5e1 !important; font-weight: 600; }
@@ -1295,6 +1298,14 @@ TRACE_ACTION_EMOJI: dict[str, str] = {
 }
 
 
+def _trace_reason_line_icon(r: dict) -> str:
+    a = str(r.get("action", ""))
+    rw = float(r.get("reward", 0.0))
+    if a == "Commit":
+        return "✅" if rw > 1e-9 else "❌"
+    return TRACE_ACTION_EMOJI.get(a, "")
+
+
 def _append_episode_trace(
     prior: list[dict] | list | None,
     o,
@@ -1307,6 +1318,7 @@ def _append_episode_trace(
         "step": int(info.get("step_number", o.step_number)),
         "action": str(an),
         "reward": float(info.get("step_reward", o.reward)),
+        "reason": str(info.get("reason", "")).strip(),
     }
     return list(prior or []) + [row]
 
@@ -1318,8 +1330,12 @@ def _episode_trace_html(rows: list[dict] | list | None, episode_done: bool) -> s
     else:
         lines: list[str] = []
         for r in rows:
-            emo = TRACE_ACTION_EMOJI.get(r["action"], "•")
             rw = float(r["reward"])
+            act = str(r.get("action", "—"))
+            if act == "Commit":
+                emo = "✅" if rw > 1e-9 else "❌"
+            else:
+                emo = TRACE_ACTION_EMOJI.get(act, "•")
             if rw > 1e-9:
                 rs, ccls = f"+{rw:.2f}", "fc-trace-pos"
             elif rw < -1e-9:
@@ -1328,8 +1344,18 @@ def _episode_trace_html(rows: list[dict] | list | None, episode_done: bool) -> s
                 rs, ccls = f"{rw:.2f}", "fc-trace-neu"
             an_esc = _html_escape(str(r.get("action", "—")))
             stn = int(r.get("step", 0))
+            sub = ""
+            reas = str(r.get("reason", "")).strip()
+            if reas:
+                ico = _trace_reason_line_icon(r)
+                ip = f"{ico} " if ico else ""
+                sub = (
+                    f'<div class="fc-trace-reason">↳ {ip}{_html_escape(reas)}</div>'
+                )
             lines.append(
+                f'<div class="fc-trace-step">'
                 f'<div class="fc-trace-line">Step {stn} → {emo} {an_esc} → <span class="{ccls}">{rs}</span></div>'
+                f"{sub}</div>"
             )
         body = '<div class="fc-trace-lines">' + "".join(lines) + "</div>"
     final = ""
