@@ -1,15 +1,18 @@
 # CPU PyTorch (smaller wheels for HF Spaces)
 --extra-index-url https://download.pytorch.org/whl/cpu
 
-# Space runtime: API + UI
-fastapi>=0.110.0
+# Gradio 4.44.0 + huggingface_hub: HfFolder import; avoid hub>=0.20
+huggingface_hub==0.19.4
+# Gradio 4.44.0 Jinja/Starlette template path breaks on FastAPI 0.115+ / Starlette 1.x (GET /ui/ → 500).
+# Pin a compatible pair so /ui/ renders (see server/app.py mount at /ui/).
+fastapi==0.111.0
 uvicorn[standard]>=0.27.0
 pydantic>=2.0.0
-gradio>=4.44.0
+gradio==4.44.0
 gymnasium>=0.29.0
 numpy>=1.26.0
 
-# Training / comparison tab (lazy-imported; keep for Retrain + plots)
+# Training (lazy-imported in gradio / train)
 matplotlib>=3.9.0
 stable-baselines3>=2.2.0
 torch>=2.0.0,<2.6

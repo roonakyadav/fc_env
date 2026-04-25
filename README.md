@@ -6,7 +6,7 @@ colorTo: indigo
 sdk: docker
 python_version: "3.12"
 app_port: 7860
-base_path: /ui
+base_path: /ui/
 short_description: RL environment for decision-making under cost
 pinned: false
 tags:
