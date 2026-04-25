@@ -7,7 +7,7 @@ sdk: docker
 python_version: "3.12"
 app_port: 7860
 base_path: /ui
-short_description: "OpenEnv-style RL — costly probes, commit or exit. FastAPI API + Gradio UI."
+short_description: RL environment for decision-making under cost
 pinned: false
 tags:
   - reinforcement-learning
