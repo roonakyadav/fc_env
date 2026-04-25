@@ -2,84 +2,413 @@
 
 from __future__ import annotations
 
+import ast
 import gradio as gr
 
 from environment import FCEnvEnvironment
 from models import Action
 
+# Match reset() in FCEnvEnvironment (for token bar; backend unchanged)
+MAX_TOKENS = 100
+HIDDEN = "HIDDEN"
+
+# Dark minimal theme + layout (no bright blue / purple / pink)
+_UI_CSS = """
+/* Root surface */
+.gradio-container, .gradio-container.fillable { background: #0f1115 !important; color: #e6e6ea !important; }
+footer.svelte-1kderq8, footer, .footer { display: none !important; }
+main.contain, .form { background: transparent; }
+
+/* Buttons: neutral dark; green/red via variants only where we set */
+.gr-button-primary { background: #1a1d24 !important; color: #e6e6ea !important; border: 1px solid #2a2f3a !important; }
+.gr-button-primary:hover { border-color: #00c853 !important; }
+button.secondary, .gr-button-secondary { background: #1a1d24 !important; }
+
+/* Text */
+.fc-muted { color: #9aa0ab; }
+.fc-panel { background: #1a1d24; border: 1px solid #2a2f3a; border-radius: 10px; padding: 14px 16px; }
+.fc-h2 { color: #f0f1f3; font-weight: 600; font-size: 0.75rem; letter-spacing: 0.06em; text-transform: uppercase; margin: 0 0 8px; }
+
+/* Clue cards */
+.clue-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+@media (max-width: 800px) { .clue-grid { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+@media (max-width: 520px) { .clue-grid { grid-template-columns: 1fr; } }
+
+.clue-card {
+  background: #1a1d24;
+  border: 1px solid #2a2f3a;
+  border-radius: 8px;
+  padding: 10px 12px;
+  min-height: 64px;
+  transition: background 0.25s ease, border-color 0.25s ease, box-shadow 0.3s ease;
+}
+.clue-card--new {
+  background: #22262f;
+  border-color: #00c853;
+  box-shadow: 0 0 0 1px rgba(0, 200, 83, 0.35);
+  animation: fc-pulse 1s ease 1;
+}
+@keyframes fc-pulse {
+  from { box-shadow: 0 0 0 0 rgba(0, 200, 83, 0.5); }
+  to { box-shadow: 0 0 0 0 rgba(0, 200, 83, 0); }
+}
+.clue-card-k {
+  color: #9aa0ab;
+  font-size: 0.68rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.clue-card-t { color: #9aa0ab; font-size: 0.65rem; }
+.clue-card-v { color: #e6e6ea; font-size: 0.9rem; line-height: 1.35; white-space: pre-wrap; }
+.clue-hidden { color: #5c6370; font-size: 1.1rem; }
+
+/* Token bar */
+.fc-token-bar { margin-top: 6px; }
+.fc-token-track { height: 6px; background: #0f1115; border-radius: 3px; overflow: hidden; border: 1px solid #2a2f3a; }
+.fc-token-fill { height: 100%; background: linear-gradient(90deg, #0d8044, #00c853); border-radius: 3px; transition: width 0.35s ease; }
+
+/* Reward / status */
+.fc-reward-pos { color: #00c853; font-weight: 600; }
+.fc-reward-neg { color: #ff5252; font-weight: 600; }
+.fc-reward-neu { color: #9aa0ab; font-weight: 600; }
+"""
+
+_UI_THEME = gr.themes.Soft(
+    primary_hue="emerald",
+    secondary_hue="zinc",
+    font=["IBM Plex Sans", "ui-sans-serif", "system-ui", "sans-serif"],
+).set(
+    body_background_fill="#0f1115",
+    body_text_color="#e6e6ea",
+    block_background_fill="#1a1d24",
+    block_label_text_color="#9aa0ab",
+    input_background_fill="#14161c",
+    button_primary_background_fill="#1a1d24",
+    button_primary_text_color="#e6e6ea",
+    button_secondary_background_fill="#14161c",
+)
+
+
+def _format_clue_line(raw: str) -> str:
+    if raw == HIDDEN:
+        return "???"
+    try:
+        t = ast.literal_eval(raw)
+        if isinstance(t, (list, tuple)) and len(t) == 2:
+            k, v = t
+            label = str(k).replace("_", " ").strip().title()
+            return f"{label}: {v}"
+    except (ValueError, SyntaxError, TypeError):
+        pass
+    return raw
+
+
+def _tier_name(idx: int) -> str:
+    return "Low-cost" if idx < 3 else "High-cost"
+
+
+def _clue_cards_html(
+    revealed_clues: tuple[str, ...] | list[str], highlight_index: int | None
+) -> str:
+    n = 6
+    if len(revealed_clues) < n:
+        return "<div class='fc-muted'>Start a new episode to see clues.</div>"
+
+    parts: list[str] = [
+        "<p class='fc-h2' style='margin:0 0 10px'>Clues</p>",
+        "<div class='clue-grid'>",
+    ]
+    for i in range(n):
+        raw = revealed_clues[i]
+        is_hidden = raw == HIDDEN
+        body = '<span class="clue-hidden">???</span>' if is_hidden else _format_clue_line(raw)
+        hcls = "clue-card clue-card--new" if highlight_index == i else "clue-card"
+        tier = _tier_name(i)
+        parts.append(
+            f'<div class="{hcls}">'
+            f'<div class="clue-card-k">Clue {i + 1} <span class="clue-card-t">({tier})</span></div>'
+            f'<div class="clue-card-v">{body}</div>'
+            f"</div>"
+        )
+    parts.append("</div>")
+    return "\n".join(parts)
+
+
+def _newly_revealed_index(
+    pre: list[str] | tuple[str, ...] | None, post: tuple[str, ...]
+) -> int | None:
+    if pre is None or len(pre) < 6 or len(post) < 6:
+        return None
+    for i in range(6):
+        if pre[i] == HIDDEN and post[i] != HIDDEN:
+            return i
+    return None
+
+
+def _outcome_text(
+    user_action: int,
+    pre: dict,
+    o,
+    new_idx: int | None,
+) -> str:
+    if pre is None:
+        return "—"
+
+    pre_tokens = int(pre.get("tokens", 0))
+    if user_action in (0, 1) and pre_tokens <= 0 and o.done:
+        return "Out of tokens — decision committed (forced)."
+
+    if new_idx is not None and user_action == 0:
+        return "Low-cost clue revealed"
+    if new_idx is not None and user_action == 1:
+        return "High-cost clue revealed"
+    if user_action == 0 and new_idx is None and pre_tokens > 0:
+        return "No low-cost clues left — spent tokens, no new clue"
+    if user_action == 1 and new_idx is None and pre_tokens > 0:
+        return "No high-cost clues left — spent tokens, no new clue"
+
+    if user_action == 2:
+        if o.reward < -0.1:
+            return "Bad decision penalty" if o.done else "Cost applied"
+        return "You committed" if o.done else "—"
+
+    if user_action == 3:
+        if o.reward > 0.05:
+            return "Smart skip saved cost"
+        if o.reward < -0.01:
+            return "Costly skip on a strong pick"
+        return "You skipped the candidate"
+
+    if o.done:
+        return "Episode over"
+    return "—"
+
+
+def _snapshot(o) -> dict:
+    return {
+        "revealed_clues": o.revealed_clues,
+        "tokens": o.tokens,
+        "step_number": o.step_number,
+        "low_remaining": o.low_remaining,
+        "high_remaining": o.high_remaining,
+        "done": o.done,
+        "reward": o.reward,
+    }
+
+
+def _last_step_html(o, outcome: str) -> str:
+    r = float(o.reward)
+    if r > 1e-6:
+        rc, cls = f"+{r:.3f}", "fc-reward-pos"
+    elif r < -1e-6:
+        rc, cls = f"{r:.3f}", "fc-reward-neg"
+    else:
+        rc, cls = f"{r:.3f}", "fc-reward-neu"
+    return (
+        f"<div class='fc-panel'>"
+        f"<p class='fc-h2' style='margin:0 0 10px'>Last step result</p>"
+        f"<p style='margin:4px 0'><span class='fc-muted'>Step reward</span> "
+        f"<span class='{cls}'>{rc}</span></p>"
+        f"<p style='margin:4px 0'><span class='fc-muted'>Tokens left</span> {o.tokens} / {MAX_TOKENS}</p>"
+        f"<p style='margin:4px 0'><span class='fc-muted'>Step</span> {o.step_number}</p>"
+        f"<p style='margin:8px 0 0' class='fc-muted'>{outcome}</p>"
+        f"</div>"
+    )
+
+
+def _token_bar_html(o) -> str:
+    pct = min(100.0, max(0.0, 100.0 * o.tokens / max(1, MAX_TOKENS)))
+    return (
+        f"<div class='fc-panel fc-token-bar'>"
+        f"<div style='display:flex;justify-content:space-between;align-items:baseline;gap:12px'>"
+        f"<span class='fc-h2' style='margin:0'>Tokens</span>"
+        f"<span class='fc-muted'>{o.tokens} / {MAX_TOKENS}</span></div>"
+        f"<div class='fc-token-track'><div class='fc-token-fill' style='width:{pct}%;'></div></div></div>"
+    )
+
+
+def _flow_badge(
+    o,
+    last_action: int | None,
+) -> str:
+    if o.done and last_action == 2:
+        return "Episode finished · <span class='fc-reward-neg' style='font-weight:600'>You committed</span>"
+    if o.done and last_action == 3:
+        return "Episode finished · <span class='fc-reward-pos' style='font-weight:600'>You skipped</span>"
+    if o.done:
+        return "Episode finished"
+    return "Episode running — reveal clues, skip, or commit when ready."
+
+
+def _button_state_from_obs(o) -> tuple:
+    d = o.done
+    toks = o.tokens
+    can_reveal = (not d) and toks > 0
+    can_choose = not d
+    return (
+        gr.update(interactive=can_reveal, visible=True),
+        gr.update(interactive=can_reveal, visible=True),
+        gr.update(interactive=can_choose, visible=True),
+        gr.update(interactive=can_choose, visible=True),
+    )
+
 
 def build_blocks() -> gr.Blocks:
-    print("Gradio UI initialized", flush=True)
-    with gr.Blocks(title="FC OpenEnv") as demo:
-        gr.Markdown("# FC OpenEnv UI")
-        gr.Markdown(
-            "Open **Interactive** to step the same environment as `POST /step` on the API; "
-            "**Status** is a quick connectivity check."
+    with gr.Blocks(
+        title="FC Decision Lab",
+        theme=_UI_THEME,
+        css=_UI_CSS,
+    ) as demo:
+        gr.HTML(
+            "<div class='fc-panel' style='border:none'>"
+            "<h1 style='color:#f0f1f3;font-size:1.5rem;font-weight:700;margin:0 0 6px'>"
+            "FC decision lab</h1>"
+            "<p class='fc-muted' style='margin:0;font-size:0.95rem'>"
+            "Reveal low- or high-cost clues, then commit or skip before you run out of steps.</p></div>"
         )
 
         with gr.Tabs():
-            with gr.Tab("Status"):
-                btn = gr.Button("Test Button")
-                output = gr.Textbox(label="Result")
+            with gr.Tab("▶️ Play"):
+                st = gr.State()  # type: ignore[var-annotated]  # { "env", "pre_obs" }
 
-                def click_fn() -> str:
-                    return "UI is working"
+                flow = gr.HTML(
+                    "<p class='fc-muted' style='margin:0'>Start a new episode to begin.</p>"
+                )
 
-                btn.click(click_fn, inputs=None, outputs=output)
+                with gr.Row():
+                    b_low = gr.Button("🔍 Reveal Low-cost Clue", interactive=False)
+                    b_high = gr.Button("💎 Reveal High-cost Clue", interactive=False)
+                with gr.Row():
+                    b_skip = gr.Button("❌ Skip Candidate", interactive=False, variant="stop")
+                    b_commit = gr.Button("✅ Commit Decision", interactive=False)
 
-            with gr.Tab("Interactive"):
-                def _o(o) -> dict:
-                    return {
-                        "revealed_clues": list(o.revealed_clues),
-                        "tokens": o.tokens,
-                        "step_number": o.step_number,
-                        "low_remaining": o.low_remaining,
-                        "high_remaining": o.high_remaining,
-                        "done": o.done,
-                        "reward": o.reward,
-                    }
+                b_reset = gr.Button("Start new episode", variant="primary")
 
-                def _s(e: FCEnvEnvironment) -> dict:
-                    st = e.state()
-                    return {
-                        "episode_id": st.episode_id,
-                        "step_count": st.step_count,
-                        "tokens": st.tokens,
-                        "done": st.done,
-                        "low_revealed": st.low_revealed,
-                        "high_revealed": st.high_revealed,
-                    }
+                _welcome = (
+                    "<p class='fc-muted' style='margin:0'>"
+                    "Press <strong>Start new episode</strong> to play.</p>"
+                )
+                clues = gr.HTML(_welcome)
+                token_block = gr.HTML("<p class='fc-muted' style='margin:0'>—</p>")
+                last_block = gr.HTML(
+                    "<div class='fc-panel'><p class='fc-muted' style='margin:0'>"
+                    "No step yet</p></div>"
+                )
 
-                def on_reset() -> tuple[FCEnvEnvironment, dict, dict, str]:
-                    env = FCEnvEnvironment()
-                    o = env.reset()
-                    return env, _o(o), _s(env), "New episode. Pick action 0–3, then **Take step**."
+                def on_start() -> tuple:
+                    e = FCEnvEnvironment()
+                    o = e.reset()
+                    snap = _snapshot(o)
+                    s0: dict = {"env": e, "pre_obs": snap}
+                    bup = _button_state_from_obs(o)
+                    return (
+                        s0,
+                        _clue_cards_html(o.revealed_clues, None),
+                        _token_bar_html(o),
+                        _last_step_html(o, "Episode started — your move."),
+                        _flow_badge(o, None),
+                    ) + bup
 
                 def on_step(
-                    env: FCEnvEnvironment | None, action: int | str | float
-                ) -> tuple[FCEnvEnvironment, dict, dict, str]:
-                    if env is None:
-                        e = FCEnvEnvironment()
-                        o = e.reset()
-                        return e, _o(o), _s(e), "Started new episode."
-                    o = env.step(Action(action=int(action)))
-                    msg = "Episode done — use **Reset**." if o.done else "OK."
-                    return env, _o(o), _s(env), msg
+                    s: dict | None,
+                    user_action: int,
+                ) -> tuple:
+                    if not s or s.get("env") is None:
+                        idle = (gr.update(),) * 8
+                        return (s,) + idle
 
-                env_st = gr.State()  # type: ignore[var-annotated]
-                with gr.Row():
-                    act = gr.Dropdown(choices=[0, 1, 2, 3], value=0, label="Action")
-                with gr.Row():
-                    b_reset = gr.Button("Reset (new episode)", variant="primary")
-                    b_step = gr.Button("Take step")
-                obs_json = gr.JSON(label="Last observation", value={})
-                st_json = gr.JSON(label="State", value={})
-                log = gr.Textbox(label="Log", lines=2, value="Click **Reset** to start.")
+                    e: FCEnvEnvironment = s["env"]  # type: ignore[assignment]
+                    pre_dict = s.get("pre_obs")
+                    if not isinstance(pre_dict, dict):
+                        return on_start()
+                    pre_clues: tuple = tuple(pre_dict.get("revealed_clues", ()))
+                    o = e.step(Action(action=user_action))
+                    if len(pre_clues) < 6:
+                        new_idx = None
+                    else:
+                        new_idx = _newly_revealed_index(pre_clues, o.revealed_clues)
+                    out = _snapshot(o)
+                    next_s: dict = {"env": e, "pre_obs": out}
+                    bup = _button_state_from_obs(o)
+                    return (
+                        next_s,
+                        _clue_cards_html(o.revealed_clues, new_idx),
+                        _token_bar_html(o),
+                        _last_step_html(
+                            o,
+                            _outcome_text(user_action, pre_dict, o, new_idx),
+                        ),
+                        _flow_badge(o, user_action),
+                    ) + bup
 
                 b_reset.click(
-                    on_reset, outputs=[env_st, obs_json, st_json, log]
+                    on_start,
+                    inputs=None,
+                    outputs=[
+                        st,
+                        clues,
+                        token_block,
+                        last_block,
+                        flow,
+                        b_low,
+                        b_high,
+                        b_skip,
+                        b_commit,
+                    ],
                 )
-                b_step.click(
-                    on_step, inputs=[env_st, act], outputs=[env_st, obs_json, st_json, log]
+                b_low.click(
+                    lambda s: on_step(s, 0),
+                    inputs=[st],
+                    outputs=[
+                        st,
+                        clues,
+                        token_block,
+                        last_block,
+                        flow,
+                        b_low,
+                        b_high,
+                        b_skip,
+                        b_commit,
+                    ],
                 )
+                b_high.click(
+                    lambda s: on_step(s, 1),
+                    inputs=[st],
+                    outputs=[st, clues, token_block, last_block, flow, b_low, b_high, b_skip, b_commit],
+                )
+                b_commit.click(
+                    lambda s: on_step(s, 2),
+                    inputs=[st],
+                    outputs=[st, clues, token_block, last_block, flow, b_low, b_high, b_skip, b_commit],
+                )
+                b_skip.click(
+                    lambda s: on_step(s, 3),
+                    inputs=[st],
+                    outputs=[st, clues, token_block, last_block, flow, b_low, b_high, b_skip, b_commit],
+                )
+
+            with gr.Tab("📊 Compare"):
+                gr.Markdown(
+                    "### Trained vs random\n\n"
+                    "The environment supports policy evaluation: a **random** policy "
+                    "picks a legal action at random. A **trained** policy (e.g. tabular Q-learning "
+                    "or PPO in `train.py`) optimizes for cumulative reward and win rate vs that baseline.\n\n"
+                    "Training writes metrics under `artifacts/`. Run `python train.py` locally to reproduce "
+                    "curves; the API here stays the same — only the policy changes."
+                )
+
+            with gr.Tab("ℹ️ About"):
+                gr.Markdown(
+                    "You manage a **token budget** and choose **low-cost** vs **high-cost** clues. "
+                    "Reveals fill in the six cards; hidden slots stay as **???** until you pay to reveal. "
+                    "When you **commit** or **skip**, the episode ends and rewards reflect whether you read "
+                    "the situation well. This UI talks to the same single-step logic as the Space API — "
+                    "only the front end is customized for a clear, decision-first experience."
+                )
+
     return demo
