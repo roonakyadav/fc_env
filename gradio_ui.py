@@ -20,13 +20,13 @@ html {
 }
 
 body {
-  background-color: #0f1115 !important;
+  background-color: #0b0f14 !important;
   color: #ffffff !important;
   opacity: 1 !important;
 }
 
 .gradio-container, .gradio-container.fillable {
-  background-color: #0f1115 !important;
+  background-color: #0b0f14 !important;
   color: #ffffff !important;
   opacity: 1 !important;
 }
@@ -82,7 +82,7 @@ button:disabled, .gr-button:disabled, button.gr-button:disabled {
   opacity: 1 !important;
 }
 .gr-form {
-  background: #0f1115 !important;
+  background: #0b0f14 !important;
   color: #ffffff !important;
   opacity: 1 !important;
   border: none !important;
@@ -92,7 +92,7 @@ button:disabled, .gr-button:disabled, button.gr-button:disabled {
 }
 .gr-html .fc-muted, .prose .fc-muted { color: #cccccc !important; }
 main, main.contain, .form, .form > div {
-  background: #0f1115 !important;
+  background: #0b0f14 !important;
   color: #ffffff !important;
 }
 
@@ -252,22 +252,131 @@ p, .gradio-container p, li, span:not(.fc-reward-pos):not(.fc-reward-neg) {
 .fc-reward-neg { color: #ff5252 !important; font-weight: 600; -webkit-text-fill-color: #ff5252; }
 .fc-reward-neu { color: #cccccc !important; font-weight: 600; -webkit-text-fill-color: #cccccc; }
 
+/* Header (game) */
+.header-card, .gr-group.header-card, div.header-card {
+  background: linear-gradient(135deg, #111827, #1f2937) !important;
+  padding: 20px 22px !important;
+  border-radius: 14px !important;
+  border: 1px solid #2a2f3a !important;
+  margin-bottom: 12px !important;
+  box-shadow: 0 8px 32px -12px rgba(0, 0, 0, 0.55) !important;
+}
+.header-card .prose, .header-card h1, .header-card p { color: #ffffff !important; }
+
+/* Clue cell (6 separate markdowns; inner HTML) */
+.clue-v2-inner {
+  display: block;
+  background: #141922;
+  border: 1px solid #2a2f3a;
+  border-radius: 12px;
+  padding: 20px 14px;
+  min-height: 100px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+}
+.clue-v2-inner::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(60, 120, 255, 0.04), transparent 50%);
+  pointer-events: none;
+  opacity: 0.5;
+}
+.clue-v2-inner.revealed {
+  background: #1f2937;
+  border-color: #4b5563;
+}
+.clue-v2-inner.just-revealed {
+  border-color: #00a651;
+  box-shadow: 0 0 0 1px #00a651, 0 6px 20px -6px rgba(0, 166, 81, 0.35);
+  animation: clue-pop 0.5s ease 1;
+}
+@keyframes clue-pop {
+  from { transform: scale(0.98); opacity: 0.9; }
+  to { transform: scale(1); opacity: 1; }
+}
+.clue-v2-t { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; margin-bottom: 8px; position: relative; z-index: 1; }
+.clue-v2-b { font-size: 1.05rem; color: #f3f4f6; font-weight: 600; line-height: 1.3; position: relative; z-index: 1; }
+.clue-v2-b.hid { color: #4b5563; font-size: 1.25rem; letter-spacing: 0.15em; }
+
+.clue-md { margin: 0 !important; }
+.clue-md .prose { min-height: 0 !important; }
+button.gr-button.btn-primary, .btn-primary, .gr-button.btn-reveal.btn-primary {
+  min-height: 48px;
+  background: #374151 !important;
+  border-color: #4b5563 !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  font-size: 0.95rem !important;
+  border-radius: 10px !important;
+}
+button.gr-button.btn-secondary, .gr-button.btn-reveal.btn-secondary {
+  min-height: 48px;
+  background: #1f2937 !important;
+  border-color: #3d4a5c !important;
+  color: #f9fafb !important;
+  font-weight: 600 !important;
+  font-size: 0.95rem !important;
+  border-radius: 10px !important;
+}
+button.gr-button.btn-danger, .btn-danger {
+  min-height: 48px;
+  background: #7f1d1d !important;
+  border-color: #b91c1c !important;
+  color: #fff !important;
+  font-weight: 600 !important;
+  font-size: 0.95rem !important;
+  border-radius: 10px !important;
+}
+button.gr-button.btn-success, .btn-success {
+  min-height: 48px;
+  background: #065f46 !important;
+  border-color: #059669 !important;
+  color: #fff !important;
+  font-weight: 600 !important;
+  font-size: 0.95rem !important;
+  border-radius: 10px !important;
+}
+button.gr-button.btn-cta {
+  min-height: 50px;
+  background: #1e3a5f !important;
+  border-color: #2d5a8a !important;
+  color: #fff !important;
+  font-weight: 600 !important;
+  font-size: 1rem !important;
+  border-radius: 12px !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+.counter-bar, .gr-markdown.counter-bar, .gr-markdown.counter-bar .prose { font-size: 1rem; margin: 0 !important; line-height: 1.5; }
+.counter-bar p { margin: 0; }
+
+/* Read-only token slider: looks like a bar */
+.form .token-slider input[type=range] {
+  height: 8px; border-radius: 4px;
+  accent-color: #059669;
+}
+.form .token-slider, .form .token-slider label { color: #e5e7eb !important; }
+
 /* Episode log (scrollable) */
-.history-box, .history-box .prose {
-  max-height: 300px !important;
+.history-panel, .history-box, .history-box .prose, .history-panel .prose {
+  max-height: 280px !important;
   overflow-y: auto !important;
-  padding: 10px 12px !important;
-  margin-top: 12px !important;
-  background-color: #111318 !important;
+  padding: 12px 14px !important;
+  margin-top: 0 !important;
+  background: #0f172a !important;
   color: #e5e7eb !important;
   border: 1px solid #2a2f3a !important;
-  border-radius: 10px !important;
-  font-size: 0.9rem;
+  border-radius: 12px !important;
+  font-size: 0.88rem;
   line-height: 1.5;
   opacity: 1 !important;
 }
-.history-box .prose p, .history-box .prose li { color: #e5e7eb !important; }
-.history-box h2 { color: #ffffff !important; }
+.history-box .prose p, .history-box .prose li, .history-panel .prose p { color: #e5e7eb !important; }
+.history-box h2, .history-panel h2, .history-panel h2 { color: #ffffff !important; }
+.last-step-card { border: 1px solid #2a2f3a; border-radius: 12px; }
 """
 
 
@@ -289,31 +398,75 @@ def _tier_name(idx: int) -> str:
     return "Low-cost" if idx < 3 else "High-cost"
 
 
-def _clue_cards_html(
-    revealed_clues: tuple[str, ...] | list[str], highlight_index: int | None
+def _clue_cell_value(
+    index: int,
+    raw: str,
+    highlight_index: int | None,
 ) -> str:
-    n = 6
-    if len(revealed_clues) < n:
-        return "<div class='fc-muted'>Start a new episode to see clues.</div>"
+    tier = _tier_name(index)
+    hidden = raw == HIDDEN
+    body = _format_clue_line(raw) if not hidden else "???"
+    rcls = "clue-v2-inner"
+    if not hidden:
+        rcls += " revealed"
+    if highlight_index == index and not hidden:
+        rcls += " just-revealed"
+    body_cls = "clue-v2-b hid" if hidden else "clue-v2-b"
+    return (
+        f'<div class="{rcls}">'
+        f'<div class="clue-v2-t">Clue {index + 1} · {tier}</div>'
+        f'<div class="{body_cls}">{body}</div>'
+        f"</div>"
+    )
 
-    parts: list[str] = [
-        "<p class='fc-h2' style='margin:0 0 10px'>Clues</p>",
-        "<div class='clue-grid'>",
-    ]
-    for i in range(n):
-        raw = revealed_clues[i]
-        is_hidden = raw == HIDDEN
-        body = '<span class="clue-hidden">???</span>' if is_hidden else _format_clue_line(raw)
-        hcls = "clue-card clue-card--new" if highlight_index == i else "clue-card"
-        tier = _tier_name(i)
-        parts.append(
-            f'<div class="{hcls}">'
-            f'<div class="clue-card-k">Clue {i + 1} <span class="clue-card-t">({tier})</span></div>'
-            f'<div class="clue-card-v">{body}</div>'
-            f"</div>"
+
+def _six_clue_values(
+    revealed: tuple[str, ...] | list[str],
+    highlight: int | None,
+) -> tuple[str, str, str, str, str, str]:
+    if not revealed or len(revealed) < 6:
+        ph = _clue_cell_value(0, HIDDEN, None)
+        return (ph, ph, ph, ph, ph, ph)
+    return tuple(
+        _clue_cell_value(i, revealed[i], highlight)  # type: ignore[index]
+        for i in range(6)
+    )
+
+
+COUNTER_BAR_IDLE = (
+    '<div class="counter-g">'
+    '<p class="counter-line" style="margin:0">'
+    "Low clues: <span class=\"c-mute\" style=\"color:#6b7280\">—</span> · High clues: "
+    '<span class="c-mute" style="color:#6b7280">—</span></p>'
+    '<p style="margin:6px 0 0;font-size:0.8rem;color:#6b7280">Start a new episode to play.</p>'
+    "</div>"
+)
+
+
+def _counter_bar_value(o) -> str:
+    lo, hi = o.low_remaining, o.high_remaining
+    cl = "#b91c1c" if lo == 0 else "#00a651"
+    ch = "#b91c1c" if hi == 0 else "#00a651"
+    if lo == 0 and hi == 0:
+        hint = '<p style="margin:8px 0 0;font-size:0.85rem;color:#fca5a5">No reveals left. Use Commit or Skip.</p>'
+    elif lo == 0:
+        hint = (
+            '<p style="margin:8px 0 0;font-size:0.85rem;color:#fca5a5">'
+            "No low-cost clues remaining.</p>"
         )
-    parts.append("</div>")
-    return "\n".join(parts)
+    elif hi == 0:
+        hint = (
+            '<p style="margin:8px 0 0;font-size:0.85rem;color:#fca5a5">'
+            "No high-cost clues remaining.</p>"
+        )
+    else:
+        hint = ""
+    return (
+        '<div class="counter-g">'
+        f'<p class="counter-line" style="margin:0">'
+        f'Low clues: <strong style="color:{cl}">{lo}</strong> · '
+        f'High clues: <strong style="color:{ch}">{hi}</strong></p>{hint}</div>'
+    )
 
 
 def _newly_revealed_index(
@@ -393,7 +546,7 @@ def _last_step_html(o, outcome: str) -> str:
     else:
         rc, cls = f"{r:.3f}", "fc-reward-neu"
     return (
-        f"<div class='fc-panel'>"
+        f"<div class='fc-panel last-step-card'>"
         f"<p class='fc-h2' style='margin:0 0 10px'>Last step result</p>"
         f"<p style='margin:4px 0'><span class='fc-muted'>Step reward</span> "
         f"<span class='{cls}'>{rc}</span></p>"
@@ -401,17 +554,6 @@ def _last_step_html(o, outcome: str) -> str:
         f"<p style='margin:4px 0'><span class='fc-muted'>Step</span> {o.step_number}</p>"
         f"<p style='margin:8px 0 0' class='fc-muted'>{outcome}</p>"
         f"</div>"
-    )
-
-
-def _token_bar_html(o) -> str:
-    pct = min(100.0, max(0.0, 100.0 * o.tokens / max(1, MAX_TOKENS)))
-    return (
-        f"<div class='fc-panel fc-token-bar'>"
-        f"<div style='display:flex;justify-content:space-between;align-items:baseline;gap:12px'>"
-        f"<span class='fc-h2' style='margin:0'>Tokens</span>"
-        f"<span class='fc-muted'>{o.tokens} / {MAX_TOKENS}</span></div>"
-        f"<div class='fc-token-track'><div class='fc-token-fill' style='width:{pct}%;'></div></div></div>"
     )
 
 
@@ -440,14 +582,6 @@ def _button_state_from_obs(o) -> tuple:
         gr.update(interactive=can_choose, visible=True),
         gr.update(interactive=can_choose, visible=True),
     )
-
-
-COUNTER_INACTIVE = (
-    '<div class="fc-counter" style="margin:0">'
-    '<span style="color:#9ca3af">Low clues left: —</span></div>',
-    '<div class="fc-counter" style="margin:0">'
-    '<span style="color:#9ca3af">High clues left: —</span></div>',
-)
 
 
 # Episode log (0–3 = env Action values; matches buttons in UI)
@@ -518,79 +652,103 @@ def _log_to_markdown(h: dict | None) -> str:
     return "### Episode history\n\n" + "\n\n---\n\n".join(h["lines"]) + "\n"
 
 
-def _counter_markdown_pair(o) -> tuple[str, str]:
-    c_low = "#ff5252" if o.low_remaining == 0 else "#00c853"
-    c_high = "#ff5252" if o.high_remaining == 0 else "#00c853"
-    low = (
-        f'<div class="fc-counter" style="margin:0">'
-        f'<span style="color:{c_low};font-weight:600">Low clues left: {o.low_remaining}</span></div>'
-    )
-    high = (
-        f'<div class="fc-counter" style="margin:0">'
-        f'<span style="color:{c_high};font-weight:600">High clues left: {o.high_remaining}</span></div>'
-    )
-    return low, high
-
-
 def build_blocks() -> gr.Blocks:
     with gr.Blocks(
         title="FC Decision Lab",
         theme=gr.themes.Base(),
         css=CSS_STRING,
     ) as demo:
-        gr.HTML(
-            "<div class='fc-panel' style='border:none'>"
-            "<h1 style='color:#f0f1f3;font-size:1.5rem;font-weight:700;margin:0 0 6px'>"
-            "FC decision lab</h1>"
-            "<p class='fc-muted' style='margin:0;font-size:0.95rem'>"
-            "Reveal low- or high-cost clues, then commit or skip before you run out of steps.</p></div>"
-        )
-
         with gr.Tabs():
             with gr.Tab("Play"):
                 st = gr.State()  # type: ignore[var-annotated]  # { "env", "pre_obs" }
                 history_state = gr.State(HISTORY_STATE_INIT)  # type: ignore[var-annotated]
 
-                flow = gr.HTML(
-                    "<p class='fc-muted' style='margin:0'>Start a new episode to begin.</p>"
-                )
-
-                with gr.Row():
-                    low_counter = gr.Markdown(
-                        COUNTER_INACTIVE[0],
-                        elem_classes=["fc-counter-wrap"],
-                        sanitize_html=False,
-                    )
-                    high_counter = gr.Markdown(
-                        COUNTER_INACTIVE[1],
-                        elem_classes=["fc-counter-wrap"],
-                        sanitize_html=False,
+                with gr.Group(elem_classes="header-card"):
+                    gr.Markdown("# FC Decision Lab")
+                    gr.Markdown(
+                        "Reveal clues strategically. **Commit** or **Skip** before your token budget runs out."
                     )
 
-                with gr.Row():
-                    b_low = gr.Button("Reveal low-cost clue", interactive=False)
-                    b_high = gr.Button("Reveal high-cost clue", interactive=False)
-                with gr.Row():
-                    b_skip = gr.Button("Skip candidate", interactive=False, variant="stop")
-                    b_commit = gr.Button("Commit decision", interactive=False)
+                b_reset = gr.Button("Start new episode", elem_classes=["btn-cta"])
 
-                b_reset = gr.Button("Start new episode", variant="primary")
+                _ph = _clue_cell_value(0, HIDDEN, None)
+                with gr.Row():
+                    clue0 = gr.Markdown(_ph, elem_classes=["clue-md"], sanitize_html=False)
+                    clue1 = gr.Markdown(_ph, elem_classes=["clue-md"], sanitize_html=False)
+                    clue2 = gr.Markdown(_ph, elem_classes=["clue-md"], sanitize_html=False)
+                with gr.Row():
+                    clue3 = gr.Markdown(_ph, elem_classes=["clue-md"], sanitize_html=False)
+                    clue4 = gr.Markdown(_ph, elem_classes=["clue-md"], sanitize_html=False)
+                    clue5 = gr.Markdown(_ph, elem_classes=["clue-md"], sanitize_html=False)
 
-                _welcome = (
-                    "<p class='fc-muted' style='margin:0'>"
-                    "Press <strong>Start new episode</strong> to play.</p>"
+                with gr.Row():
+                    b_low = gr.Button(
+                        "Reveal low",
+                        interactive=False,
+                        elem_classes=["btn-reveal", "btn-primary"],
+                    )
+                    b_high = gr.Button(
+                        "Reveal high",
+                        interactive=False,
+                        elem_classes=["btn-reveal", "btn-secondary"],
+                    )
+                with gr.Row():
+                    b_skip = gr.Button(
+                        "Skip",
+                        interactive=False,
+                        elem_classes=["btn-danger"],
+                    )
+                    b_commit = gr.Button(
+                        "Commit",
+                        interactive=False,
+                        elem_classes=["btn-success"],
+                    )
+
+                counter_bar = gr.Markdown(
+                    COUNTER_BAR_IDLE, elem_classes=["counter-bar"], sanitize_html=False
                 )
-                clues = gr.HTML(_welcome)
-                token_block = gr.HTML("<p class='fc-muted' style='margin:0'>—</p>")
+                token_slider = gr.Slider(
+                    0,
+                    MAX_TOKENS,
+                    value=MAX_TOKENS,
+                    label="Token budget (remaining)",
+                    interactive=False,
+                    show_label=True,
+                    elem_classes=["token-slider"],
+                )
                 last_block = gr.HTML(
-                    "<div class='fc-panel'><p class='fc-muted' style='margin:0'>"
-                    "No step yet</p></div>"
+                    "<div class='fc-panel last-step-card'>"
+                    "<p class='fc-h2' style='margin:0 0 8px'>Last step</p>"
+                    "<p class='fc-muted' style='margin:0'>No action yet. Start a new episode.</p></div>"
                 )
-
+                flow = gr.HTML(
+                    "<p class='fc-muted' style='margin:0;font-size:0.9rem'>"
+                    "Press **Start** to begin.</p>"
+                )
                 history_display = gr.Markdown(
                     _log_to_markdown(HISTORY_STATE_INIT),
-                    elem_classes=["history-box"],
+                    elem_classes=["history-box", "history-panel"],
                 )
+
+                _out_play = [
+                    st,
+                    history_state,
+                    clue0,
+                    clue1,
+                    clue2,
+                    clue3,
+                    clue4,
+                    clue5,
+                    last_block,
+                    flow,
+                    counter_bar,
+                    token_slider,
+                    history_display,
+                    b_low,
+                    b_high,
+                    b_skip,
+                    b_commit,
+                ]
 
                 def on_start() -> tuple:
                     e = FCEnvEnvironment()
@@ -599,17 +757,16 @@ def build_blocks() -> gr.Blocks:
                     s0: dict = {"env": e, "pre_obs": snap}
                     h0: dict = {"lines": [], "cum": 0.0, "stale": False}
                     h_md = _log_to_markdown(h0)
-                    lo, hi = _counter_markdown_pair(o)
+                    cells = _six_clue_values(o.revealed_clues, None)
                     bup = _button_state_from_obs(o)
                     return (
                         s0,
                         h0,
-                        _clue_cards_html(o.revealed_clues, None),
-                        _token_bar_html(o),
+                        *cells,
                         _last_step_html(o, "Episode started — your move."),
                         _flow_badge(o, None),
-                        lo,
-                        hi,
+                        _counter_bar_value(o),
+                        gr.update(value=o.tokens),
                         h_md,
                     ) + bup
 
@@ -619,8 +776,7 @@ def build_blocks() -> gr.Blocks:
                     hist: dict | None,
                 ) -> tuple:
                     if not s or s.get("env") is None:
-                        idle = (gr.update(),) * 12
-                        return (s,) + idle
+                        return (s,) + (gr.update(),) * 16
 
                     e: FCEnvEnvironment = s["env"]  # type: ignore[assignment]
                     pre_dict = s.get("pre_obs")
@@ -632,121 +788,49 @@ def build_blocks() -> gr.Blocks:
                         new_idx = None
                     else:
                         new_idx = _newly_revealed_index(pre_clues, o.revealed_clues)
-                    out = _snapshot(o)
-                    next_s: dict = {"env": e, "pre_obs": out}
+                    next_s: dict = {"env": e, "pre_obs": _snapshot(o)}
                     bup = _button_state_from_obs(o)
-                    lo, hi = _counter_markdown_pair(o)
+                    cells = _six_clue_values(o.revealed_clues, new_idx)
                     h_new = _log_after_step(hist, user_action, o)
                     h_md = _log_to_markdown(h_new)
                     return (
                         next_s,
                         h_new,
-                        _clue_cards_html(o.revealed_clues, new_idx),
-                        _token_bar_html(o),
+                        *cells,
                         _last_step_html(
                             o,
                             _outcome_text(user_action, pre_dict, o, new_idx),
                         ),
                         _flow_badge(o, user_action),
-                        lo,
-                        hi,
+                        _counter_bar_value(o),
+                        gr.update(value=o.tokens),
                         h_md,
                     ) + bup
 
                 b_reset.click(
                     on_start,
                     inputs=None,
-                    outputs=[
-                        st,
-                        history_state,
-                        clues,
-                        token_block,
-                        last_block,
-                        flow,
-                        low_counter,
-                        high_counter,
-                        history_display,
-                        b_low,
-                        b_high,
-                        b_skip,
-                        b_commit,
-                    ],
+                    outputs=_out_play,
                 )
                 b_low.click(
                     lambda s, h: on_step(s, 0, h),
                     inputs=[st, history_state],
-                    outputs=[
-                        st,
-                        history_state,
-                        clues,
-                        token_block,
-                        last_block,
-                        flow,
-                        low_counter,
-                        high_counter,
-                        history_display,
-                        b_low,
-                        b_high,
-                        b_skip,
-                        b_commit,
-                    ],
+                    outputs=_out_play,
                 )
                 b_high.click(
                     lambda s, h: on_step(s, 1, h),
                     inputs=[st, history_state],
-                    outputs=[
-                        st,
-                        history_state,
-                        clues,
-                        token_block,
-                        last_block,
-                        flow,
-                        low_counter,
-                        high_counter,
-                        history_display,
-                        b_low,
-                        b_high,
-                        b_skip,
-                        b_commit,
-                    ],
+                    outputs=_out_play,
                 )
                 b_commit.click(
                     lambda s, h: on_step(s, 2, h),
                     inputs=[st, history_state],
-                    outputs=[
-                        st,
-                        history_state,
-                        clues,
-                        token_block,
-                        last_block,
-                        flow,
-                        low_counter,
-                        high_counter,
-                        history_display,
-                        b_low,
-                        b_high,
-                        b_skip,
-                        b_commit,
-                    ],
+                    outputs=_out_play,
                 )
                 b_skip.click(
                     lambda s, h: on_step(s, 3, h),
                     inputs=[st, history_state],
-                    outputs=[
-                        st,
-                        history_state,
-                        clues,
-                        token_block,
-                        last_block,
-                        flow,
-                        low_counter,
-                        high_counter,
-                        history_display,
-                        b_low,
-                        b_high,
-                        b_skip,
-                        b_commit,
-                    ],
+                    outputs=_out_play,
                 )
 
             with gr.Tab("Compare"):
