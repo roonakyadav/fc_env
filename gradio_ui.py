@@ -21,6 +21,18 @@ LIVE_STATS_DEFAULT: dict[str, int | float] = {
     "step_count": 0,
 }
 
+# Human-readable clue attribute badges (Play card grid HTML)
+ATTR_LABELS: dict[str, str] = {
+    "nationality": "NATION",
+    "position": "POSITION",
+    "club": "CLUB",
+    "league": "LEAGUE",
+    "decade": "DECADE",
+    "caps": "CAPS",
+    "age": "AGE",
+    "goals": "GOALS",
+}
+
 # Game shell: dark + neon; forced dark for consistent "premium" look on all systems
 CSS_STRING = r"""
 /* --- FC Decision Lab: game skin --- */
@@ -694,7 +706,7 @@ GRADIO_APP_FONT_LINKS = """
 
 # Play tab: complete skin; every declaration uses !important (Gradio loads CSS after ours).
 PLAY_TAB_HEAD_INJECT = r"""
-<style>
+<style id="fc-play-styles">
 .play-tab { background: #0A0A0A !important; color: #E0E0E0 !important; overflow: visible !important; }
 .play-tab .gap { gap: 12px !important; }
 .play-tab .wrap,
@@ -708,6 +720,13 @@ PLAY_TAB_HEAD_INJECT = r"""
   border: 1px solid #1E1E1E !important;
   color: #E0E0E0 !important;
   box-shadow: none !important;
+}
+
+#fc-play-root.play-tab {
+  max-width: 860px !important;
+  margin: 0 auto !important;
+  padding: 24px 20px !important;
+  box-sizing: border-box !important;
 }
 
 .play-tab .play-header h1 {
@@ -731,134 +750,30 @@ PLAY_TAB_HEAD_INJECT = r"""
   margin: 0 0 16px !important;
 }
 
+.play-tab .start-btn > div > button,
+.play-tab .start-btn > div > .gr-button,
 .play-tab .start-btn button,
 .play-tab .start-btn .gr-button {
-  background: #C8FF00 !important;
-  color: #0A0A0A !important;
-  font-weight: 700 !important;
-  font-size: 13px !important;
-  letter-spacing: 0.08em !important;
-  text-transform: uppercase !important;
-  border: none !important;
-  border-radius: 4px !important;
-  height: 48px !important;
-  min-height: 48px !important;
+  background: #0A0A0A !important;
+  border: 1px solid #C8FF00 !important;
+  color: #C8FF00 !important;
+  height: 50px !important;
+  min-height: 50px !important;
   width: 100% !important;
   max-width: 100% !important;
-  box-shadow: none !important;
-  transition: background 100ms ease !important;
-}
-.play-tab .start-btn button:hover,
-.play-tab .start-btn .gr-button:hover { background: #AADD00 !important; }
-
-.play-tab .fc-clue-arena,
-.play-tab .fc-play-clue-arena,
-.play-tab .card-grid { max-width: 900px !important; margin: 0 auto !important; padding: 8px 0 12px !important; }
-.play-tab .fc-clue-grid {
-  display: grid !important;
-  grid-template-columns: repeat(3, 1fr) !important;
-  gap: 12px !important;
-}
-@media (max-width: 700px) {
-  .play-tab .fc-clue-grid { grid-template-columns: repeat(2, 1fr) !important; }
-}
-@media (max-width: 420px) {
-  .play-tab .fc-clue-grid { grid-template-columns: 1fr !important; }
-}
-
-.play-tab .fc-card-scene {
-  perspective: 1000px !important;
-  min-height: 110px !important;
-  border-radius: 6px !important;
-  box-shadow: none !important;
-}
-.play-tab .fc-card-inner {
-  min-height: 110px !important;
-  border-radius: 6px !important;
-  transition: transform 0.45s ease !important;
-  box-shadow: none !important;
-}
-.play-tab .clue-card-low .fc-card-face--back,
-.play-tab .clue-card-low .fc-card-face--front {
-  background: #131313 !important;
-  border: 1px solid #222222 !important;
-  border-radius: 6px !important;
-  box-shadow: none !important;
-}
-.play-tab .clue-card-high .fc-card-face--back,
-.play-tab .clue-card-high .fc-card-face--front {
-  background: #131313 !important;
-  border: 1px solid #222222 !important;
-  border-radius: 6px !important;
-  box-shadow: none !important;
-}
-.play-tab .clue-card-high .fc-card-face--back { border: 1px solid #2A1010 !important; }
-.play-tab .fc-card-face {
-  position: relative !important;
-  padding: 14px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-}
-.play-tab .fc-card-face--front {
-  align-items: flex-start !important;
-  justify-content: flex-start !important;
-}
-.play-tab .fc-card-face--back {
-  background-image: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 2px,
-    rgba(255, 255, 255, 0.02) 2px,
-    rgba(255, 255, 255, 0.02) 4px
-  ) !important;
-}
-.play-tab .clue-unknown,
-.play-tab .fc-card-question {
-  font-size: 22px !important;
-  color: #3A3A3A !important;
-  font-family: "JetBrains Mono", monospace !important;
-  letter-spacing: 0.4em !important;
-  user-select: none !important;
-  font-weight: 600 !important;
-}
-.play-tab .fc-card-scene.is-revealed .fc-card-face--front,
-.play-tab .clue-card-low.revealed .fc-card-face--front { border-color: #C8FF00 !important; }
-.play-tab .clue-card-high.revealed .fc-card-face--front { border-color: #FF4444 !important; }
-.play-tab .clue-revealed,
-.play-tab .fc-card-val {
-  font-size: 18px !important;
-  color: #E0E0E0 !important;
-  font-weight: 600 !important;
-  font-family: "JetBrains Mono", monospace !important;
-}
-.play-tab .fc-card-lbl {
-  color: #666666 !important;
-  font-size: 10px !important;
-}
-.play-tab .fc-card-badge,
-.play-tab .badge-low,
-.play-tab .badge-high {
-  position: absolute !important;
-  top: 10px !important;
-  left: 10px !important;
-  font-size: 9px !important;
+  font-size: 12px !important;
   font-weight: 700 !important;
   letter-spacing: 0.12em !important;
-  padding: 3px 7px !important;
-  border-radius: 3px !important;
+  text-transform: uppercase !important;
+  border-radius: 6px !important;
+  box-shadow: none !important;
+  transition: background 120ms ease, color 120ms ease, border-color 120ms ease !important;
 }
-.play-tab .badge-low,
-.play-tab .fc-badge--low {
-  background: #1A1A1A !important;
-  color: #777777 !important;
-  border: 1px solid #2A2A2A !important;
-}
-.play-tab .badge-high,
-.play-tab .fc-badge--high {
-  background: #1A0808 !important;
-  color: #CC3333 !important;
-  border: 1px solid #3A1010 !important;
+.play-tab .start-btn button:hover,
+.play-tab .start-btn .gr-button:hover {
+  background: #C8FF00 !important;
+  color: #0A0A0A !important;
+  border-color: #C8FF00 !important;
 }
 
 .play-tab .stats-row {
@@ -897,11 +812,12 @@ PLAY_TAB_HEAD_INJECT = r"""
   margin: 0 0 8px !important;
 }
 .play-tab .stat-value {
-  font-size: 26px !important;
+  font-size: 28px !important;
   font-weight: 700 !important;
   font-family: "JetBrains Mono", monospace !important;
-  color: #E0E0E0 !important;
   line-height: 1 !important;
+  display: block !important;
+  color: #E0E0E0 !important;
   margin: 0 !important;
 }
 .play-tab .stat-value.accent { color: #C8FF00 !important; }
@@ -940,74 +856,70 @@ PLAY_TAB_HEAD_INJECT = r"""
 .play-tab .confidence-txt--lo { color: #FF4444 !important; }
 .play-tab .confidence-txt--unk { color: #666666 !important; }
 
-.play-tab .btn-reveal-low button,
-.play-tab .btn-reveal-low .gr-button {
-  background: transparent !important;
-  border: 1px solid #2A2A2A !important;
-  color: #777777 !important;
-  font-size: 12px !important;
-  font-weight: 600 !important;
-  letter-spacing: 0.08em !important;
-  text-transform: uppercase !important;
+.play-tab .btn-grid { gap: 10px !important; }
+.play-tab .btn-grid > div {
+  flex: 1 !important;
+  min-width: 0 !important;
+}
+.play-tab .btn-low button,
+.play-tab .btn-low .gr-button,
+.play-tab .btn-high button,
+.play-tab .btn-high .gr-button,
+.play-tab .btn-ghost button,
+.play-tab .btn-ghost .gr-button,
+.play-tab .btn-commit button,
+.play-tab .btn-commit .gr-button {
+  width: 100% !important;
   height: 44px !important;
   min-height: 44px !important;
-  border-radius: 4px !important;
-  transition: border-color 100ms ease, color 100ms ease !important;
+  border-radius: 6px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.1em !important;
+  text-transform: uppercase !important;
+  transition: background 100ms ease, border-color 100ms ease, color 100ms ease !important;
+  cursor: pointer !important;
   box-shadow: none !important;
 }
-.play-tab .btn-reveal-low button:hover,
-.play-tab .btn-reveal-low .gr-button:hover {
+.play-tab .btn-low button,
+.play-tab .btn-low .gr-button {
+  background: transparent !important;
+  border: 1px solid #2A2A2A !important;
+  color: #888888 !important;
+}
+.play-tab .btn-low button:hover,
+.play-tab .btn-low .gr-button:hover {
   border-color: #C8FF00 !important;
   color: #C8FF00 !important;
 }
-.play-tab .btn-reveal-high button,
-.play-tab .btn-reveal-high .gr-button {
+.play-tab .btn-high button,
+.play-tab .btn-high .gr-button {
   background: transparent !important;
   border: 1px solid #3A1010 !important;
   color: #CC3333 !important;
-  font-size: 12px !important;
-  font-weight: 600 !important;
-  letter-spacing: 0.08em !important;
-  text-transform: uppercase !important;
-  height: 44px !important;
-  min-height: 44px !important;
-  border-radius: 4px !important;
-  transition: border-color 100ms ease, color 100ms ease !important;
-  box-shadow: none !important;
 }
-.play-tab .btn-reveal-high button:hover,
-.play-tab .btn-reveal-high .gr-button:hover {
+.play-tab .btn-high button:hover,
+.play-tab .btn-high .gr-button:hover {
   border-color: #FF5555 !important;
   color: #FF5555 !important;
 }
-.play-tab .btn-refresh button,
-.play-tab .btn-refresh .gr-button {
+.play-tab .btn-ghost button,
+.play-tab .btn-ghost .gr-button {
   background: transparent !important;
   border: 1px solid #1E1E1E !important;
-  color: #444444 !important;
-  font-size: 12px !important;
-  font-weight: 600 !important;
-  letter-spacing: 0.08em !important;
-  text-transform: uppercase !important;
-  height: 44px !important;
-  min-height: 44px !important;
-  border-radius: 4px !important;
-  box-shadow: none !important;
+  color: #555555 !important;
+}
+.play-tab .btn-ghost button:hover,
+.play-tab .btn-ghost .gr-button:hover {
+  border-color: #333333 !important;
+  color: #888888 !important;
 }
 .play-tab .btn-commit button,
 .play-tab .btn-commit .gr-button {
   background: #C8FF00 !important;
   border: none !important;
   color: #0A0A0A !important;
-  font-size: 12px !important;
-  font-weight: 700 !important;
-  letter-spacing: 0.08em !important;
-  text-transform: uppercase !important;
-  height: 44px !important;
-  min-height: 44px !important;
-  border-radius: 4px !important;
-  transition: background 100ms ease !important;
-  box-shadow: none !important;
+  font-weight: 800 !important;
 }
 .play-tab .btn-commit button:hover,
 .play-tab .btn-commit .gr-button:hover { background: #AADD00 !important; }
@@ -1252,6 +1164,14 @@ ABOUT_PANEL_HTML = r"""
 """
 
 
+def _attr_display_name(raw_key: str) -> str:
+    k = str(raw_key).strip().lower().replace(" ", "_")
+    if k in ATTR_LABELS:
+        return ATTR_LABELS[k]
+    base = str(raw_key).strip()
+    return base.upper()[:8] if base else "CLUE"
+
+
 def _clue_label_value(raw: str) -> tuple[str, str, bool]:
     """(label, value, hidden) for card face."""
     if raw == HIDDEN:
@@ -1260,8 +1180,7 @@ def _clue_label_value(raw: str) -> tuple[str, str, bool]:
         t = ast.literal_eval(raw)
         if isinstance(t, (list, tuple)) and len(t) == 2:
             k, v = t
-            label = str(k).replace("_", " ").strip().upper()
-            return (label, str(v).strip(), False)
+            return (_attr_display_name(str(k)), str(v).strip(), False)
     except (ValueError, SyntaxError, TypeError):
         pass
     return ("CLUE", str(raw), False)
@@ -1319,47 +1238,96 @@ def _render_six_clues(
 ) -> str:
     if not revealed or len(revealed) < 6:
         revealed = [HIDDEN] * 6
-    out = [
-        '<div class="fc-clue-arena fc-play-clue-arena card-grid">'
-        '<div class="fc-clue-grid">'
-    ]
+    grid_open = (
+        '<div class="fc-clue-grid-host" style="display:grid !important;'
+        "grid-template-columns:repeat(3,1fr) !important;"
+        "grid-template-rows:repeat(2,auto) !important;gap:10px !important;"
+        'margin:16px 0 !important;">'
+    )
+    parts: list[str] = [grid_open]
+    low_unrevealed = (
+        '<div class="clue-card low" style="background:#131313 !important;'
+        "border:1px solid #1E1E1E !important;border-radius:8px !important;"
+        "min-height:100px !important;padding:12px 16px !important;"
+        "position:relative !important;display:flex !important;"
+        "align-items:center !important;justify-content:center !important;\">"
+        '<span style="font-size:10px !important;font-weight:700 !important;'
+        "letter-spacing:0.12em !important;position:absolute !important;"
+        "top:10px !important;left:10px !important;padding:3px 8px !important;"
+        "border-radius:3px !important;background:#1A1A1A !important;"
+        "color:#555555 !important;border:1px solid #252525 !important;\">LOW</span>"
+        '<span style="font-size:20px !important;color:#2A2A2A !important;'
+        "font-family:'JetBrains Mono',monospace !important;"
+        'letter-spacing:0.5em !important;">???</span></div>'
+    )
+    high_unrevealed = (
+        '<div class="clue-card high" style="background:#131313 !important;'
+        "border:1px solid #1E1E1E !important;border-radius:8px !important;"
+        "min-height:100px !important;padding:12px 16px !important;"
+        "position:relative !important;display:flex !important;"
+        "align-items:center !important;justify-content:center !important;\">"
+        '<span style="font-size:10px !important;font-weight:700 !important;'
+        "letter-spacing:0.12em !important;position:absolute !important;"
+        "top:10px !important;left:10px !important;padding:3px 8px !important;"
+        "border-radius:3px !important;background:#1A0808 !important;"
+        "color:#FF4444 !important;border:1px solid #3A1010 !important;\">HIGH</span>"
+        '<span style="font-size:20px !important;color:#2A2A2A !important;'
+        "font-family:'JetBrains Mono',monospace !important;"
+        'letter-spacing:0.5em !important;">???</span></div>'
+    )
     for i in range(6):
         raw = revealed[i]  # type: ignore[index]
         label, value, hidden = _clue_label_value(raw)
-        bcls = _tier_badge_class(i)
-        bt = _tier_label(i)
-        tier_card = "clue-card-low" if i < 3 else "clue-card-high"
-        badge_x = "badge-low" if i < 3 else "badge-high"
+        is_low = i < 3
+        hi_extra = ""
+        if highlight is not None and i == highlight and not hidden:
+            hi_extra = "outline:2px solid #C8FF00 !important;outline-offset:2px !important;"
         if hidden:
-            state = "is-hidden"
-            newc = ""
-            rev_mark = ""
-            inner = (
-                f'<div class="fc-card-face fc-card-face--back">'
-                f'<span class="fc-card-badge {badge_x} {bcls}">{bt}</span>'
-                f'<div class="fc-card-question clue-unknown">???</div></div>'
+            parts.append(low_unrevealed if is_low else high_unrevealed)
+            continue
+        vhtml = _html_escape(value)
+        lhtml = _html_escape(label)
+        if is_low:
+            card = (
+                f'<div class="clue-card low" style="background:#131313 !important;'
+                f"border:1px solid #C8FF00 !important;border-radius:8px !important;"
+                f"min-height:100px !important;padding:12px 16px !important;"
+                f"position:relative !important;{hi_extra}\">"
+                f'<span style="font-size:10px !important;font-weight:700 !important;'
+                f"letter-spacing:0.12em !important;position:absolute !important;"
+                f"top:10px !important;left:10px !important;padding:3px 8px !important;"
+                f"border-radius:3px !important;background:#1A2200 !important;"
+                f"color:#C8FF00 !important;border:1px solid #3A5500 !important;\">"
+                f"{lhtml}</span>"
+                f'<div style="display:flex !important;align-items:center !important;'
+                f"justify-content:center !important;height:100% !important;"
+                f'padding-top:20px !important;">'
+                f'<span style="font-size:22px !important;font-weight:700 !important;'
+                f"color:#F0F0F0 !important;font-family:'JetBrains Mono',monospace !important;\">"
+                f"{vhtml}</span></div></div>"
             )
         else:
-            newc = " is-new" if (highlight is not None and i == highlight) else ""
-            state = f"is-revealed{newc}"
-            rev_mark = " revealed"
-            vhtml = _html_escape(value)
-            lhtml = _html_escape(label)
-            inner = (
-                f'<div class="fc-card-face fc-card-face--back">'
-                f'<span class="fc-card-badge {badge_x} {bcls}">{bt}</span>'
-                f'<div class="fc-card-question clue-unknown">???</div></div>'
-                f'<div class="fc-card-face fc-card-face--front">'
-                f'<span class="fc-card-badge {badge_x} {bcls}">{bt}</span>'
-                f'<div class="fc-card-lbl">{lhtml}</div>'
-                f'<div class="fc-card-val clue-revealed">{vhtml}</div></div>'
+            card = (
+                f'<div class="clue-card high" style="background:#131313 !important;'
+                f"border:1px solid #FF4444 !important;border-radius:8px !important;"
+                f"min-height:100px !important;padding:12px 16px !important;"
+                f"position:relative !important;{hi_extra}\">"
+                f'<span style="font-size:10px !important;font-weight:700 !important;'
+                f"letter-spacing:0.12em !important;position:absolute !important;"
+                f"top:10px !important;left:10px !important;padding:3px 8px !important;"
+                f"border-radius:3px !important;background:#1A0808 !important;"
+                f"color:#FF4444 !important;border:1px solid #3A1010 !important;\">"
+                f"{lhtml}</span>"
+                f'<div style="display:flex !important;align-items:center !important;'
+                f"justify-content:center !important;height:100% !important;"
+                f'padding-top:20px !important;">'
+                f'<span style="font-size:22px !important;font-weight:700 !important;'
+                f"color:#F0F0F0 !important;font-family:'JetBrains Mono',monospace !important;\">"
+                f"{vhtml}</span></div></div>"
             )
-        out.append(
-            f'<div class="fc-card-scene {tier_card} {state}{rev_mark}">'
-            f'<div class="fc-card-inner">{inner}</div></div>'
-        )
-    out.append("</div></div>")
-    return "".join(out)
+        parts.append(card)
+    parts.append("</div>")
+    return "".join(parts)
 
 
 COUNTER_FOOTER_IDLE = (
@@ -1832,15 +1800,15 @@ def _stat_html_reward(stats: dict | None) -> str:
     s = {**LIVE_STATS_DEFAULT, **(stats or {})}
     tot = float(s["total_reward"])
     if tot > 1e-9:
-        cls, ts = "accent", f"+{tot:.2f}"
+        cls, reward_str = "accent", f"+{tot:.2f}"
     elif tot < -1e-9:
-        cls, ts = "danger", f"{tot:.2f}"
+        cls, reward_str = "danger", f"{tot:.2f}"
     else:
-        cls, ts = "zero", f"{tot:.2f}"
+        cls, reward_str = "zero", f"{tot:.2f}"
     return (
         f'<div class="stat-block">'
         f'<div class="stat-label">Total reward</div>'
-        f'<div class="stat-value {cls}">{ts}</div>'
+        f'<div class="stat-value {cls}">{reward_str}</div>'
         f"</div>"
     )
 
@@ -1966,43 +1934,43 @@ def build_blocks() -> gr.Blocks:
                         elem_classes=["fc-conf-outer"],
                     )
 
-                    with gr.Row(elem_classes=["fc-actions-row fc-play-actions-1"]):
+                    with gr.Row(elem_classes=["btn-grid"]):
                         b_low = gr.Button(
-                            "Reveal Low",
+                            "REVEAL LOW",
                             interactive=False,
                             elem_id="fc-play-btn-low",
                             elem_classes=[
-                                "btn-reveal-low",
+                                "btn-low",
                                 "gr-button",
                                 "fc-btn--low",
                                 "gr-button-primary",
                             ],
                         )
                         b_high = gr.Button(
-                            "Reveal High",
+                            "REVEAL HIGH",
                             interactive=False,
                             elem_id="fc-play-btn-high",
                             elem_classes=[
-                                "btn-reveal-high",
+                                "btn-high",
                                 "gr-button",
                                 "fc-btn--high",
                                 "gr-button-primary",
                             ],
                         )
-                    with gr.Row(elem_classes=["fc-actions-row fc-play-actions-2"]):
+                    with gr.Row(elem_classes=["btn-grid"]):
                         b_skip = gr.Button(
-                            "Refresh",
+                            "REFRESH",
                             interactive=False,
                             elem_id="fc-play-btn-refresh",
                             elem_classes=[
-                                "btn-refresh",
+                                "btn-ghost",
                                 "gr-button",
                                 "fc-btn--refresh",
                                 "gr-button-primary",
                             ],
                         )
                         b_commit = gr.Button(
-                            "Commit",
+                            "COMMIT",
                             interactive=False,
                             elem_id="fc-play-btn-commit",
                             elem_classes=[
