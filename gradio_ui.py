@@ -64,12 +64,14 @@ button span, .gr-button span {
   color: #ffffff !important;
 }
 
-/* Disabled: clearly disabled, not “ghosted” the same as idle */
+/* Disabled: distinct via color, no opacity < 1 (keeps text readable) */
 button:disabled, .gr-button:disabled, button.gr-button:disabled {
-  opacity: 0.55 !important;
-  color: #aaaaaa !important;
-  -webkit-text-fill-color: #aaaaaa !important;
-  background-color: #151a22 !important;
+  opacity: 1 !important;
+  color: #9ca3af !important;
+  -webkit-text-fill-color: #9ca3af !important;
+  background-color: #0f1319 !important;
+  border-color: #1a202c !important;
+  cursor: not-allowed;
 }
 
 /* Cards & blocks */
@@ -102,12 +104,42 @@ textarea, input, select {
   opacity: 1 !important;
 }
 
-/* Labels & markdown */
+/* Labels */
 label, .label-wrap, [data-testid] label {
   color: #cccccc !important;
   opacity: 1 !important;
 }
-.markdown, .prose, .prose p, [class*="markdown"] {
+
+/* Markdown: strong contrast, no wash-out */
+.markdown, .prose {
+  color: #ffffff !important;
+  opacity: 1 !important;
+}
+.markdown p, .prose p {
+  color: #e5e7eb !important;
+  line-height: 1.6 !important;
+  opacity: 1 !important;
+}
+.markdown li, .prose li { color: #e5e7eb !important; opacity: 1 !important; }
+.markdown strong, .prose strong {
+  color: #ffffff !important;
+  opacity: 1 !important;
+  font-weight: 600;
+}
+.markdown code, .prose code {
+  background-color: #1f2937 !important;
+  color: #ffffff !important;
+  padding: 2px 6px;
+  border-radius: 6px;
+  border: 1px solid #2a2f3a !important;
+  opacity: 1 !important;
+}
+.markdown h1, .markdown h2, .markdown h3, .prose h1, .prose h2, .prose h3 {
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  opacity: 1 !important;
+}
+[class*="markdown"] {
   color: #ffffff !important;
   opacity: 1 !important;
 }
@@ -117,11 +149,41 @@ label, .label-wrap, [data-testid] label {
 }
 [class*="tab-nav"] {
   color: #ffffff !important;
+  opacity: 1 !important;
 }
 
 /* App text helper */
 p, .gradio-container p, li, span:not(.fc-reward-pos):not(.fc-reward-neg) {
-  opacity: 1;
+  opacity: 1 !important;
+}
+
+/* Compare / About: card shell */
+.content-card, .gr-group.content-card, div.content-card {
+  background-color: #161a22 !important;
+  border: 1px solid #2a2f3a !important;
+  border-radius: 12px !important;
+  padding: 16px !important;
+  margin-top: 12px !important;
+  opacity: 1 !important;
+  box-shadow: 0 1px 0 0 #0a0c10 inset, 0 4px 20px -8px #000a;
+}
+.content-card .prose, .content-card .markdown, .content-card [class*="markdown"] {
+  background: transparent !important;
+  color: #ffffff !important;
+  opacity: 1 !important;
+}
+.content-card .gr-markdown { min-height: 0; }
+.section-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #ffffff !important;
+  margin-bottom: 8px;
+  line-height: 1.3;
+  opacity: 1 !important;
+  letter-spacing: 0.01em;
+  border-bottom: 1px solid #2a2f3a;
+  padding-bottom: 10px;
+  margin-top: 0;
 }
 
 /* FC: panels & secondary (no faint grey) */
@@ -487,22 +549,29 @@ def build_blocks() -> gr.Blocks:
                 )
 
             with gr.Tab("📊 Compare"):
-                gr.Markdown(
-                    "### Trained vs random\n\n"
-                    "The environment supports policy evaluation: a **random** policy "
-                    "picks a legal action at random. A **trained** policy (e.g. tabular Q-learning "
-                    "or PPO in `train.py`) optimizes for cumulative reward and win rate vs that baseline.\n\n"
-                    "Training writes metrics under `artifacts/`. Run `python train.py` locally to reproduce "
-                    "curves; the API here stays the same — only the policy changes."
-                )
+                with gr.Group(elem_classes="content-card"):
+                    gr.Markdown(
+                        '<div class="section-title">Trained vs random</div>\n\n'
+                        "The environment supports **policy evaluation**: a **random** policy "
+                        "picks a legal action at random. A **trained** policy (e.g. tabular Q-learning "
+                        "or PPO in `train.py`) optimizes for cumulative reward and win rate against that "
+                        "baseline.\n\n"
+                        "Training writes metrics under `artifacts/`. Run `python train.py` locally to "
+                        "reproduce curves. The **API** here stays the same; only the **policy** changes.",
+                        sanitize_html=False,
+                    )
 
             with gr.Tab("ℹ️ About"):
-                gr.Markdown(
-                    "You manage a **token budget** and choose **low-cost** vs **high-cost** clues. "
-                    "Reveals fill in the six cards; hidden slots stay as **???** until you pay to reveal. "
-                    "When you **commit** or **skip**, the episode ends and rewards reflect whether you read "
-                    "the situation well. This UI talks to the same single-step logic as the Space API — "
-                    "only the front end is customized for a clear, decision-first experience."
-                )
+                with gr.Group(elem_classes="content-card"):
+                    gr.Markdown(
+                        '<div class="section-title">About this lab</div>\n\n'
+                        "You manage a **token budget** and choose **low-cost** versus **high-cost** clues. "
+                        "Reveals fill the six **Clues** cards; hidden slots show **???** until you pay to "
+                        "reveal them. When you **commit** or **skip**, the episode ends; rewards reflect "
+                        "how well you read the situation. This interface uses the same **step** logic as "
+                        "the Space **API** — the front end is only here for a clear, decision-first "
+                        "experience.",
+                        sanitize_html=False,
+                    )
 
     return demo
