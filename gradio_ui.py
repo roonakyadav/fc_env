@@ -173,6 +173,10 @@ p, .gradio-container p, li, span:not(.fc-reward-pos):not(.fc-reward-neg) {
   opacity: 1 !important;
 }
 .content-card .gr-markdown { min-height: 0; }
+
+/* Counters above actions */
+.fc-counter { font-size: 0.95rem; line-height: 1.4; }
+
 .section-title {
   font-size: 18px;
   font-weight: 600;
@@ -323,6 +327,12 @@ def _outcome_text(
         return "Low-cost clue revealed"
     if new_idx is not None and user_action == 1:
         return "High-cost clue revealed"
+
+    if user_action == 0 and int(pre.get("low_remaining", 0)) == 0 and pre_tokens > 0:
+        return "No low-cost clues remaining. Tokens were spent; nothing left to reveal."
+    if user_action == 1 and int(pre.get("high_remaining", 0)) == 0 and pre_tokens > 0:
+        return "No high-cost clues remaining. Tokens were spent; nothing left to reveal."
+
     if user_action == 0 and new_idx is None and pre_tokens > 0:
         return "No low-cost clues left — spent tokens, no new clue"
     if user_action == 1 and new_idx is None and pre_tokens > 0:
@@ -404,14 +414,37 @@ def _flow_badge(
 def _button_state_from_obs(o) -> tuple:
     d = o.done
     toks = o.tokens
-    can_reveal = (not d) and toks > 0
+    can_low = (not d) and toks > 0 and o.low_remaining > 0
+    can_high = (not d) and toks > 0 and o.high_remaining > 0
     can_choose = not d
     return (
-        gr.update(interactive=can_reveal, visible=True),
-        gr.update(interactive=can_reveal, visible=True),
+        gr.update(interactive=can_low, visible=True),
+        gr.update(interactive=can_high, visible=True),
         gr.update(interactive=can_choose, visible=True),
         gr.update(interactive=can_choose, visible=True),
     )
+
+
+COUNTER_INACTIVE = (
+    '<div class="fc-counter" style="margin:0">'
+    '<span style="color:#9ca3af">Low clues left: —</span></div>',
+    '<div class="fc-counter" style="margin:0">'
+    '<span style="color:#9ca3af">High clues left: —</span></div>',
+)
+
+
+def _counter_markdown_pair(o) -> tuple[str, str]:
+    c_low = "#ff5252" if o.low_remaining == 0 else "#00c853"
+    c_high = "#ff5252" if o.high_remaining == 0 else "#00c853"
+    low = (
+        f'<div class="fc-counter" style="margin:0">'
+        f'<span style="color:{c_low};font-weight:600">Low clues left: {o.low_remaining}</span></div>'
+    )
+    high = (
+        f'<div class="fc-counter" style="margin:0">'
+        f'<span style="color:{c_high};font-weight:600">High clues left: {o.high_remaining}</span></div>'
+    )
+    return low, high
 
 
 def build_blocks() -> gr.Blocks:
@@ -435,6 +468,18 @@ def build_blocks() -> gr.Blocks:
                 flow = gr.HTML(
                     "<p class='fc-muted' style='margin:0'>Start a new episode to begin.</p>"
                 )
+
+                with gr.Row():
+                    low_counter = gr.Markdown(
+                        COUNTER_INACTIVE[0],
+                        elem_classes=["fc-counter-wrap"],
+                        sanitize_html=False,
+                    )
+                    high_counter = gr.Markdown(
+                        COUNTER_INACTIVE[1],
+                        elem_classes=["fc-counter-wrap"],
+                        sanitize_html=False,
+                    )
 
                 with gr.Row():
                     b_low = gr.Button("🔍 Reveal Low-cost Clue", interactive=False)
@@ -461,6 +506,7 @@ def build_blocks() -> gr.Blocks:
                     o = e.reset()
                     snap = _snapshot(o)
                     s0: dict = {"env": e, "pre_obs": snap}
+                    lo, hi = _counter_markdown_pair(o)
                     bup = _button_state_from_obs(o)
                     return (
                         s0,
@@ -468,6 +514,8 @@ def build_blocks() -> gr.Blocks:
                         _token_bar_html(o),
                         _last_step_html(o, "Episode started — your move."),
                         _flow_badge(o, None),
+                        lo,
+                        hi,
                     ) + bup
 
                 def on_step(
@@ -475,7 +523,7 @@ def build_blocks() -> gr.Blocks:
                     user_action: int,
                 ) -> tuple:
                     if not s or s.get("env") is None:
-                        idle = (gr.update(),) * 8
+                        idle = (gr.update(),) * 10
                         return (s,) + idle
 
                     e: FCEnvEnvironment = s["env"]  # type: ignore[assignment]
@@ -491,6 +539,7 @@ def build_blocks() -> gr.Blocks:
                     out = _snapshot(o)
                     next_s: dict = {"env": e, "pre_obs": out}
                     bup = _button_state_from_obs(o)
+                    lo, hi = _counter_markdown_pair(o)
                     return (
                         next_s,
                         _clue_cards_html(o.revealed_clues, new_idx),
@@ -500,6 +549,8 @@ def build_blocks() -> gr.Blocks:
                             _outcome_text(user_action, pre_dict, o, new_idx),
                         ),
                         _flow_badge(o, user_action),
+                        lo,
+                        hi,
                     ) + bup
 
                 b_reset.click(
@@ -511,6 +562,8 @@ def build_blocks() -> gr.Blocks:
                         token_block,
                         last_block,
                         flow,
+                        low_counter,
+                        high_counter,
                         b_low,
                         b_high,
                         b_skip,
@@ -526,6 +579,8 @@ def build_blocks() -> gr.Blocks:
                         token_block,
                         last_block,
                         flow,
+                        low_counter,
+                        high_counter,
                         b_low,
                         b_high,
                         b_skip,
@@ -535,17 +590,53 @@ def build_blocks() -> gr.Blocks:
                 b_high.click(
                     lambda s: on_step(s, 1),
                     inputs=[st],
-                    outputs=[st, clues, token_block, last_block, flow, b_low, b_high, b_skip, b_commit],
+                    outputs=[
+                        st,
+                        clues,
+                        token_block,
+                        last_block,
+                        flow,
+                        low_counter,
+                        high_counter,
+                        b_low,
+                        b_high,
+                        b_skip,
+                        b_commit,
+                    ],
                 )
                 b_commit.click(
                     lambda s: on_step(s, 2),
                     inputs=[st],
-                    outputs=[st, clues, token_block, last_block, flow, b_low, b_high, b_skip, b_commit],
+                    outputs=[
+                        st,
+                        clues,
+                        token_block,
+                        last_block,
+                        flow,
+                        low_counter,
+                        high_counter,
+                        b_low,
+                        b_high,
+                        b_skip,
+                        b_commit,
+                    ],
                 )
                 b_skip.click(
                     lambda s: on_step(s, 3),
                     inputs=[st],
-                    outputs=[st, clues, token_block, last_block, flow, b_low, b_high, b_skip, b_commit],
+                    outputs=[
+                        st,
+                        clues,
+                        token_block,
+                        last_block,
+                        flow,
+                        low_counter,
+                        high_counter,
+                        b_low,
+                        b_high,
+                        b_skip,
+                        b_commit,
+                    ],
                 )
 
             with gr.Tab("📊 Compare"):
