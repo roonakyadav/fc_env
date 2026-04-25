@@ -451,29 +451,6 @@ button.gr-button.fc-btn--commit:hover:enabled, .gr-button.fc-btn--commit:hover:e
 .fc-conf-wrap--lo { border-color: #7f1d1d55; box-shadow: 0 0 0 1px #ff4d4d1a inset, 0 0 36px -20px #ff4d4d2a; }
 .fc-conf-wrap--unk { border-color: #1e2a3a; box-shadow: 0 4px 20px -12px #0006; }
 
-/* PPO suggestion (near action buttons) */
-.fc-sug-wrap { max-width: 900px; margin: 0 auto 8px; }
-.fc-sug-row { margin-bottom: 0; }
-button.gr-button.fc-btn--suggest, .gr-button.fc-btn--suggest {
-  min-height: 44px; width: 100% !important; max-width: 420px; display: block; margin: 0 auto;
-  background: linear-gradient(180deg, #0c1520, #0a0f16) !important; color: #e0f2fe !important;
-  border: 1px solid #0ea5e9 !important; box-shadow: 0 0 22px -8px #0ea5e977;
-  font-weight: 700; letter-spacing: 0.03em;
-}
-button.gr-button.fc-btn--suggest:hover:enabled, .gr-button.fc-btn--suggest:hover:enabled {
-  box-shadow: 0 0 32px -4px #22d3ee99; border-color: #22d3ee !important; transform: scale(1.02);
-}
-.fc-sug-out {
-  text-align: center; margin: 0 auto 6px; max-width: 720px; padding: 16px 18px; border-radius: 14px; font-size: 1.05rem; line-height: 1.45; font-weight: 600;
-  background: linear-gradient(180deg, #0a1520, #0b0f14); border: 1px solid #155e75;
-  box-shadow: 0 0 0 1px #22d3ee22 inset, 0 0 40px -18px #0ea5e94d;
-  color: #e2e8f0 !important;
-}
-.fc-sug-out--ok { color: #a5f3fc !important; border-color: #0ea5e9aa; }
-.fc-sug-hint { display: block; font-size: 0.86rem; font-weight: 500; color: #7dd3fcbb !important; margin-top: 8px; }
-.fc-sug-out--muted, .fc-sug-out--muted p { color: #8b9db0 !important; font-weight: 500; }
-.fc-sug-emoji { font-size: 1.1em; }
-
 /* Episode trace (step-by-step, below Last action) */
 .fc-trace-outer { margin-top: 10px; }
 .fc-trace-panel {
@@ -1504,98 +1481,6 @@ def _confidence_html(level: str) -> str:
     )
 
 
-# PPO "Suggest Action" (labels match env / model_suggest)
-SUGGEST_ACTION_LABELS: dict[int, str] = {
-    0: "Reveal Low",
-    1: "Reveal High",
-    2: "Commit",
-    3: "Refresh",
-}
-SUGGEST_ACTION_TAIL: dict[int, str] = {0: " 🟦", 1: " ⚡", 2: " ✅", 3: " 🔄"}
-
-
-def _observation_from_pre(pre: dict) -> "Observation":
-    from models import Observation
-
-    return Observation(
-        revealed_clues=tuple(pre.get("revealed_clues", ())),
-        tokens=int(pre.get("tokens", 0)),
-        step_number=int(pre.get("step_number", 0)),
-        low_remaining=int(pre.get("low_remaining", 0)),
-        high_remaining=int(pre.get("high_remaining", 0)),
-        done=bool(pre.get("done", False)),
-        reward=float(pre.get("reward", 0.0)),
-        info=dict(pre.get("info", {})),
-    )
-
-
-def _suggest_idle_html() -> str:
-    return (
-        '<p class="fc-sug-out fc-sug-out--muted" style="padding:10px 12px; margin:0; font-size:0.9rem">'
-        "Get a PPO policy hint for the current state (requires trained model files).</p>"
-    )
-
-
-def _suggest_result_block(label: str, kind: str, tail: str, hint: str) -> str:
-    h = f'<span class="fc-sug-hint">{_html_escape(hint)}</span>' if hint else ""
-    cls = "fc-sug-out fc-sug-out--ok" if kind == "ok" else "fc-sug-out fc-sug-out--muted"
-    return (
-        f'<div class="{cls}"><p class="fc-sug-main" style="margin:0; font-size:1.1rem; font-weight:800;">'
-        f"Recommended Action: {label}{tail}</p>{h}</div>"
-    )
-
-
-def _suggest_on_click(s: dict | None) -> str:
-    if not s or s.get("env") is None:
-        return (
-            '<div class="fc-sug-out fc-sug-out--muted" style="margin:0; padding:12px 14px;">'
-            "Start episode first</div>"
-        )
-    pre = s.get("pre_obs")
-    if not isinstance(pre, dict):
-        return (
-            '<div class="fc-sug-out fc-sug-out--muted" style="margin:0; padding:12px 14px;">'
-            "Start episode first</div>"
-        )
-    if pre.get("done"):
-        return (
-            '<div class="fc-sug-out fc-sug-out--muted" style="margin:0; padding:12px 14px;">'
-            "No suggestion (episode finished)</div>"
-        )
-    try:
-        obs = _observation_from_pre(pre)
-    except (TypeError, KeyError, ValueError):
-        return (
-            '<div class="fc-sug-out fc-sug-out--muted" style="margin:0; padding:12px 14px;">'
-            "Start episode first</div>"
-        )
-    try:
-        from model_suggest import get_model_action
-
-        a = int(get_model_action(obs))
-    except FileNotFoundError as e:
-        return (
-            '<div class="fc-sug-out fc-sug-out--muted" style="margin:0; padding:12px 14px;">'
-            f"{_html_escape(str(e))}</div>"
-        )
-    except Exception as e:  # noqa: BLE001 — surface short message
-        return (
-            '<div class="fc-sug-out fc-sug-out--muted" style="margin:0; padding:12px 14px;">'
-            f"Could not get suggestion: {_html_escape(str(e)[:200])}</div>"
-        )
-    if a not in (0, 1, 2, 3):
-        return _suggest_idle_html()
-    label = SUGGEST_ACTION_LABELS[a]
-    tail = SUGGEST_ACTION_TAIL.get(a, "")
-    if a == 2:
-        hint = "AI is confident enough to commit"
-    elif a in (0, 1):
-        hint = "AI prefers gathering more information"
-    else:
-        hint = ""
-    return _suggest_result_block(label, "ok", tail, hint)
-
-
 def build_blocks() -> gr.Blocks:
     with gr.Blocks(
         title="FC Decision Lab",
@@ -1624,15 +1509,6 @@ def build_blocks() -> gr.Blocks:
                 )
                 confidence_display = gr.HTML(
                     _confidence_html("UNKNOWN"), elem_classes=["fc-conf-outer"]
-                )
-
-                with gr.Row(elem_classes=["fc-sug-wrap fc-sug-row"]):
-                    b_suggest = gr.Button(
-                        "Suggest Action",
-                        elem_classes=["gr-button", "fc-btn--suggest", "gr-button-primary"],
-                    )
-                suggestion_display = gr.HTML(
-                    _suggest_idle_html(), elem_classes=["fc-sug-wrap"]
                 )
 
                 with gr.Row(elem_classes=["fc-actions-row"]):
@@ -1691,13 +1567,12 @@ def build_blocks() -> gr.Blocks:
                     flow,
                     footer_status,
                     history_display,
-                    suggestion_display,
                     b_low,
                     b_high,
                     b_skip,
                     b_commit,
                 ]
-                n_out = 19
+                n_out = 17
                 n_skip_updates = n_out - 1
 
                 def on_start() -> tuple:
@@ -1734,7 +1609,6 @@ def build_blocks() -> gr.Blocks:
                         _flow_badge(o, None),
                         _play_footer_html(o),
                         h_html,
-                        _suggest_idle_html(),
                     ) + bup
 
                 def on_step(
@@ -1782,7 +1656,6 @@ def build_blocks() -> gr.Blocks:
                         _flow_badge(o, user_action),
                         _play_footer_html(o),
                         h_html,
-                        gr.update(),
                     ) + bup
 
                 b_reset.click(
@@ -1810,12 +1683,6 @@ def build_blocks() -> gr.Blocks:
                     inputs=[st, history_state, episode_trace, live_stats],
                     outputs=_out_play,
                 )
-                b_suggest.click(
-                    _suggest_on_click,
-                    inputs=[st],
-                    outputs=[suggestion_display],
-                )
-
             with gr.Tab("Compare"):
                 gr.HTML(
                     _compare_panel_html(), elem_classes=["fc-tab-compare"]
