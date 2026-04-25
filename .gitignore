@@ -1,4 +1,5 @@
 __pycache__/
+tensorboard_logs/
 .venv/
 *.pyc
 .DS_Store
