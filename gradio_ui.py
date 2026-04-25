@@ -12,22 +12,129 @@ from models import Action
 MAX_TOKENS = 100
 HIDDEN = "HIDDEN"
 
-# Dark minimal theme + layout (no bright blue / purple / pink)
-_UI_CSS = """
-/* Root surface */
-.gradio-container, .gradio-container.fillable { background: #0f1115 !important; color: #e6e6ea !important; }
-footer.svelte-1kderq8, footer, .footer { display: none !important; }
-main.contain, .form { background: transparent; }
+# High-contrast dark shell + layout (forced; ignores system light/dark)
+CSS_STRING = """
+/* Lock browser + Gradio to dark, avoid washed-out system rendering */
+html {
+  color-scheme: dark !important;
+}
 
-/* Buttons: neutral dark; green/red via variants only where we set */
-.gr-button-primary { background: #1a1d24 !important; color: #e6e6ea !important; border: 1px solid #2a2f3a !important; }
-.gr-button-primary:hover { border-color: #00c853 !important; }
-button.secondary, .gr-button-secondary { background: #1a1d24 !important; }
+body {
+  background-color: #0f1115 !important;
+  color: #ffffff !important;
+  opacity: 1 !important;
+}
 
-/* Text */
-.fc-muted { color: #9aa0ab; }
-.fc-panel { background: #1a1d24; border: 1px solid #2a2f3a; border-radius: 10px; padding: 14px 16px; }
-.fc-h2 { color: #f0f1f3; font-weight: 600; font-size: 0.75rem; letter-spacing: 0.06em; text-transform: uppercase; margin: 0 0 8px; }
+.gradio-container, .gradio-container.fillable {
+  background-color: #0f1115 !important;
+  color: #ffffff !important;
+  opacity: 1 !important;
+}
+
+footer, .footer, [class*="footer"] {
+  display: none !important;
+}
+
+/* Headings */
+h1, h2, h3, h4 {
+  color: #ffffff !important;
+}
+
+/* All buttons: solid, readable; Gradio uses .gr-button */
+button, .gr-button {
+  background-color: #1f2937 !important;
+  color: #ffffff !important;
+  border: 1px solid #2e3440 !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+button span, .gr-button span {
+  color: #ffffff !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+.gr-button-primary, button.gr-button-primary {
+  background-color: #1f2937 !important;
+  color: #ffffff !important;
+  border-color: #2e3440 !important;
+}
+.gr-button-primary:hover, button:hover:enabled {
+  background-color: #2b3444 !important;
+  border-color: #00c853 !important;
+  color: #ffffff !important;
+}
+
+/* Disabled: clearly disabled, not “ghosted” the same as idle */
+button:disabled, .gr-button:disabled, button.gr-button:disabled {
+  opacity: 0.55 !important;
+  color: #aaaaaa !important;
+  -webkit-text-fill-color: #aaaaaa !important;
+  background-color: #151a22 !important;
+}
+
+/* Cards & blocks */
+.card, .gr-box, .gr-panel, .gr-html {
+  background-color: #1a1d24 !important;
+  color: #ffffff !important;
+  border-radius: 10px !important;
+  opacity: 1 !important;
+}
+.gr-form {
+  background: #0f1115 !important;
+  color: #ffffff !important;
+  opacity: 1 !important;
+  border: none !important;
+}
+.gr-html, .gr-html * {
+  color: #ffffff;
+}
+.gr-html .fc-muted, .prose .fc-muted { color: #cccccc !important; }
+main, main.contain, .form, .form > div {
+  background: #0f1115 !important;
+  color: #ffffff !important;
+}
+
+/* Inputs (if any) */
+textarea, input, select {
+  background-color: #111318 !important;
+  color: #ffffff !important;
+  border-color: #2e3440 !important;
+  opacity: 1 !important;
+}
+
+/* Labels & markdown */
+label, .label-wrap, [data-testid] label {
+  color: #cccccc !important;
+  opacity: 1 !important;
+}
+.markdown, .prose, .prose p, [class*="markdown"] {
+  color: #ffffff !important;
+  opacity: 1 !important;
+}
+.tabitem, button[role="tab"] {
+  color: #ffffff !important;
+  opacity: 1 !important;
+}
+[class*="tab-nav"] {
+  color: #ffffff !important;
+}
+
+/* App text helper */
+p, .gradio-container p, li, span:not(.fc-reward-pos):not(.fc-reward-neg) {
+  opacity: 1;
+}
+
+/* FC: panels & secondary (no faint grey) */
+.fc-muted { color: #cccccc !important; opacity: 1 !important; }
+.fc-panel {
+  background-color: #1a1d24 !important;
+  color: #ffffff !important;
+  border: 1px solid #2e3440 !important;
+  border-radius: 10px;
+  padding: 14px 16px;
+  opacity: 1 !important;
+}
+.fc-h2 { color: #ffffff !important; font-weight: 600; font-size: 0.75rem; letter-spacing: 0.06em; text-transform: uppercase; margin: 0 0 8px; }
 
 /* Clue cards */
 .clue-grid {
@@ -37,61 +144,48 @@ button.secondary, .gr-button-secondary { background: #1a1d24 !important; }
 }
 @media (max-width: 800px) { .clue-grid { grid-template-columns: repeat(2, minmax(0,1fr)); } }
 @media (max-width: 520px) { .clue-grid { grid-template-columns: 1fr; } }
-
 .clue-card {
-  background: #1a1d24;
-  border: 1px solid #2a2f3a;
+  background-color: #1a1d24 !important;
+  border: 1px solid #2e3440 !important;
+  color: #ffffff !important;
   border-radius: 8px;
   padding: 10px 12px;
   min-height: 64px;
-  transition: background 0.25s ease, border-color 0.25s ease, box-shadow 0.3s ease;
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  opacity: 1 !important;
 }
 .clue-card--new {
-  background: #22262f;
-  border-color: #00c853;
-  box-shadow: 0 0 0 1px rgba(0, 200, 83, 0.35);
-  animation: fc-pulse 1s ease 1;
+  background-color: #222831 !important;
+  border-color: #00c853 !important;
+  box-shadow: 0 0 0 1px #00c853;
+  animation: fc-pulse 0.8s ease 1;
 }
 @keyframes fc-pulse {
-  from { box-shadow: 0 0 0 0 rgba(0, 200, 83, 0.5); }
-  to { box-shadow: 0 0 0 0 rgba(0, 200, 83, 0); }
+  from { box-shadow: 0 0 0 2px #00c853; }
+  to { box-shadow: 0 0 0 0 #00c853; }
 }
 .clue-card-k {
-  color: #9aa0ab;
+  color: #cccccc !important;
   font-size: 0.68rem;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   margin-bottom: 4px;
+  opacity: 1 !important;
 }
-.clue-card-t { color: #9aa0ab; font-size: 0.65rem; }
-.clue-card-v { color: #e6e6ea; font-size: 0.9rem; line-height: 1.35; white-space: pre-wrap; }
-.clue-hidden { color: #5c6370; font-size: 1.1rem; }
+.clue-card-t { color: #cccccc !important; font-size: 0.65rem; opacity: 1 !important; }
+.clue-card-v { color: #ffffff !important; font-size: 0.9rem; line-height: 1.4; white-space: pre-wrap; }
+.clue-hidden { color: #aaaaaa !important; font-size: 1.1rem; }
 
 /* Token bar */
 .fc-token-bar { margin-top: 6px; }
-.fc-token-track { height: 6px; background: #0f1115; border-radius: 3px; overflow: hidden; border: 1px solid #2a2f3a; }
-.fc-token-fill { height: 100%; background: linear-gradient(90deg, #0d8044, #00c853); border-radius: 3px; transition: width 0.35s ease; }
+.fc-token-track { height: 6px; background: #0f1115; border-radius: 3px; overflow: hidden; border: 1px solid #2e3440; }
+.fc-token-fill { height: 100%; background: linear-gradient(90deg, #0d8044, #00c853); border-radius: 3px; }
 
-/* Reward / status */
-.fc-reward-pos { color: #00c853; font-weight: 600; }
-.fc-reward-neg { color: #ff5252; font-weight: 600; }
-.fc-reward-neu { color: #9aa0ab; font-weight: 600; }
+/* Rewards (intentional accent) */
+.fc-reward-pos { color: #00c853 !important; font-weight: 600; -webkit-text-fill-color: #00c853; }
+.fc-reward-neg { color: #ff5252 !important; font-weight: 600; -webkit-text-fill-color: #ff5252; }
+.fc-reward-neu { color: #cccccc !important; font-weight: 600; -webkit-text-fill-color: #cccccc; }
 """
-
-_UI_THEME = gr.themes.Soft(
-    primary_hue="emerald",
-    secondary_hue="zinc",
-    font=["IBM Plex Sans", "ui-sans-serif", "system-ui", "sans-serif"],
-).set(
-    body_background_fill="#0f1115",
-    body_text_color="#e6e6ea",
-    block_background_fill="#1a1d24",
-    block_label_text_color="#9aa0ab",
-    input_background_fill="#14161c",
-    button_primary_background_fill="#1a1d24",
-    button_primary_text_color="#e6e6ea",
-    button_secondary_background_fill="#14161c",
-)
 
 
 def _format_clue_line(raw: str) -> str:
@@ -261,8 +355,8 @@ def _button_state_from_obs(o) -> tuple:
 def build_blocks() -> gr.Blocks:
     with gr.Blocks(
         title="FC Decision Lab",
-        theme=_UI_THEME,
-        css=_UI_CSS,
+        theme=gr.themes.Base(),
+        css=CSS_STRING,
     ) as demo:
         gr.HTML(
             "<div class='fc-panel' style='border:none'>"
