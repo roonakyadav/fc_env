@@ -678,148 +678,133 @@ summary { color: #e5e7eb; font-weight: 700; letter-spacing: 0.02em; }
 """
 
 STATIC_HEADER = """
-<div class="fc-play-page-header">
+<div class="fc-play-page-header play-header">
   <h1 class="fc-play-h1">FC Decision Lab</h1>
   <p class="fc-play-tagline">Reveal clues strategically. Spend tokens wisely.</p>
   <div class="fc-play-header-line" aria-hidden="true"></div>
 </div>
 """
 
-# Scoped Play tab only: fonts + overrides (flat, #0A0A0A shell, accent #C8FF00).
-PLAY_TAB_HEAD_INJECT = r"""
+# First line of Blocks (before Tabs): font preconnect + JetBrains Mono only.
+GRADIO_APP_FONT_LINKS = """
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+"""
+
+# Play tab: complete skin; every declaration uses !important (Gradio loads CSS after ours).
+PLAY_TAB_HEAD_INJECT = r"""
 <style>
-#fc-play-root, #fc-play-root * {
-  box-sizing: border-box;
-}
-#fc-play-root.fc-play-page {
-  padding: 4px 12px 32px !important;
-  max-width: 960px !important;
-  margin-left: auto !important;
-  margin-right: auto !important;
-}
-#fc-play-root {
-  font-family: Inter, system-ui, -apple-system, Segoe UI, sans-serif !important;
-  color: #F0F0F0 !important;
-  background: #0A0A0A !important;
-  --fc-accent: #C8FF00;
-  --fc-accent-hover: #AEDD00;
-  --fc-bg: #0A0A0A;
-  --fc-surface: #111111;
-  --fc-surface2: #161616;
-  --fc-border: #1E1E1E;
-  --fc-text: #F0F0F0;
-  --fc-muted: #666666;
-  --fc-danger: #FF4444;
-  --fc-low: #888888;
+.play-tab { background: #0A0A0A !important; color: #E0E0E0 !important; overflow: visible !important; }
+.play-tab .gap { gap: 12px !important; }
+.play-tab .wrap,
+.play-tab [class*="block"] { background: transparent !important; border: none !important; box-shadow: none !important; }
+.play-tab .card-grid.wrap,
+.play-tab .card-grid [class*="wrap"],
+.play-tab .card-grid [class*="column"] { padding: 0 !important; margin: 0 !important; gap: 12px !important; }
+.play-tab input,
+.play-tab textarea {
+  background: #111111 !important;
+  border: 1px solid #1E1E1E !important;
+  color: #E0E0E0 !important;
+  box-shadow: none !important;
 }
 
-/* Page header */
-#fc-play-root .fc-play-page-header { margin: 0 0 0; padding: 0 0 16px; }
-#fc-play-root .fc-play-h1 {
-  font-size: 28px !important;
+.play-tab .play-header h1 {
+  font-size: 26px !important;
   font-weight: 700 !important;
-  letter-spacing: -0.5px !important;
+  letter-spacing: -0.4px !important;
   color: #F0F0F0 !important;
-  margin: 0 0 8px !important;
-  line-height: 1.15 !important;
-  text-shadow: none !important;
+  margin: 0 0 4px !important;
 }
-#fc-play-root .fc-play-tagline {
-  font-size: 13px !important;
-  font-weight: 400 !important;
-  color: #555555 !important;
+.play-tab .play-header p,
+.play-tab .play-header .fc-play-tagline {
+  font-size: 11px !important;
   text-transform: uppercase !important;
-  letter-spacing: 0.08em !important;
-  margin: 0 0 14px !important;
-  line-height: 1.45 !important;
+  letter-spacing: 0.1em !important;
+  color: #444444 !important;
+  margin: 0 0 20px !important;
 }
-#fc-play-root .fc-play-header-line {
+.play-tab .fc-play-header-line {
   height: 1px !important;
   background: #1E1E1E !important;
-  margin: 0 !important;
-  border: none !important;
+  margin: 0 0 16px !important;
 }
 
-/* Start episode */
-#fc-play-root button.gr-button.fc-btn--start,
-#fc-play-root .gr-button.fc-btn--start {
-  width: 100% !important;
-  max-width: 100% !important;
-  min-height: 48px !important;
-  height: 48px !important;
+.play-tab .start-btn button,
+.play-tab .start-btn .gr-button {
   background: #C8FF00 !important;
   color: #0A0A0A !important;
   font-weight: 700 !important;
-  font-size: 14px !important;
-  letter-spacing: 0.06em !important;
+  font-size: 13px !important;
+  letter-spacing: 0.08em !important;
   text-transform: uppercase !important;
-  border-radius: 4px !important;
   border: none !important;
+  border-radius: 4px !important;
+  height: 48px !important;
+  min-height: 48px !important;
+  width: 100% !important;
+  max-width: 100% !important;
   box-shadow: none !important;
-  transition: background 120ms ease, color 120ms ease, opacity 120ms ease !important;
+  transition: background 100ms ease !important;
 }
-#fc-play-root button.gr-button.fc-btn--start:hover:enabled,
-#fc-play-root .gr-button.fc-btn--start:hover:enabled {
-  background: #AEDD00 !important;
-  transform: none !important;
-  box-shadow: none !important;
-}
-#fc-play-root button.gr-button.fc-btn--start:focus-visible,
-#fc-play-root .gr-button.fc-btn--start:focus-visible {
-  outline: none !important;
-  box-shadow: 0 0 0 2px rgba(200, 255, 0, 0.4) !important;
-}
+.play-tab .start-btn button:hover,
+.play-tab .start-btn .gr-button:hover { background: #AADD00 !important; }
 
-/* Clue grid + cards: flat, no gold */
-#fc-play-root .fc-clue-arena,
-#fc-play-root .fc-play-clue-arena { max-width: 900px; margin: 0 auto; padding: 8px 0 12px; }
-#fc-play-root .fc-clue-grid {
+.play-tab .fc-clue-arena,
+.play-tab .fc-play-clue-arena,
+.play-tab .card-grid { max-width: 900px !important; margin: 0 auto !important; padding: 8px 0 12px !important; }
+.play-tab .fc-clue-grid {
   display: grid !important;
   grid-template-columns: repeat(3, 1fr) !important;
   gap: 12px !important;
 }
 @media (max-width: 700px) {
-  #fc-play-root .fc-clue-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  .play-tab .fc-clue-grid { grid-template-columns: repeat(2, 1fr) !important; }
 }
 @media (max-width: 420px) {
-  #fc-play-root .fc-clue-grid { grid-template-columns: 1fr !important; }
+  .play-tab .fc-clue-grid { grid-template-columns: 1fr !important; }
 }
 
-#fc-play-root .fc-card-scene {
+.play-tab .fc-card-scene {
   perspective: 1000px !important;
-  min-height: 120px !important;
+  min-height: 110px !important;
   border-radius: 6px !important;
   box-shadow: none !important;
 }
-#fc-play-root .fc-card-inner {
-  min-height: 120px !important;
+.play-tab .fc-card-inner {
+  min-height: 110px !important;
   border-radius: 6px !important;
   transition: transform 0.45s ease !important;
   box-shadow: none !important;
 }
-#fc-play-root .fc-card-scene.is-hidden:hover .fc-card-inner {
-  transform: rotateY(0deg) scale(1.02) !important;
-  filter: none !important;
-}
-#fc-play-root .fc-card-scene.is-new .fc-card-face--front {
-  box-shadow: none !important;
-  animation: none !important;
-}
-#fc-play-root .fc-card-scene.is-hidden .fc-card-face--back {
-  box-shadow: none !important;
-}
-
-#fc-play-root .fc-card-face {
+.play-tab .clue-card-low .fc-card-face--back,
+.play-tab .clue-card-low .fc-card-face--front {
+  background: #131313 !important;
+  border: 1px solid #222222 !important;
   border-radius: 6px !important;
-  padding: 24px !important;
   box-shadow: none !important;
-  border: 1px solid #1E1E1E !important;
 }
-#fc-play-root .fc-card-face--back {
-  background: #111111 !important;
+.play-tab .clue-card-high .fc-card-face--back,
+.play-tab .clue-card-high .fc-card-face--front {
+  background: #131313 !important;
+  border: 1px solid #222222 !important;
+  border-radius: 6px !important;
+  box-shadow: none !important;
+}
+.play-tab .clue-card-high .fc-card-face--back { border: 1px solid #2A1010 !important; }
+.play-tab .fc-card-face {
+  position: relative !important;
+  padding: 14px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+.play-tab .fc-card-face--front {
+  align-items: flex-start !important;
+  justify-content: flex-start !important;
+}
+.play-tab .fc-card-face--back {
   background-image: repeating-linear-gradient(
     0deg,
     transparent,
@@ -827,407 +812,268 @@ PLAY_TAB_HEAD_INJECT = r"""
     rgba(255, 255, 255, 0.02) 2px,
     rgba(255, 255, 255, 0.02) 4px
   ) !important;
-  color: #2A2A2A !important;
 }
-#fc-play-root .fc-card-question {
-  font-size: 32px !important;
+.play-tab .clue-unknown,
+.play-tab .fc-card-question {
+  font-size: 22px !important;
+  color: #3A3A3A !important;
+  font-family: "JetBrains Mono", monospace !important;
+  letter-spacing: 0.4em !important;
+  user-select: none !important;
   font-weight: 600 !important;
-  letter-spacing: 0.3em !important;
-  font-family: "JetBrains Mono", ui-monospace, monospace !important;
-  color: #2A2A2A !important;
-  text-shadow: none !important;
 }
-#fc-play-root .fc-card-scene.is-revealed .fc-card-face--front {
-  border: 1px solid #C8FF00 !important;
+.play-tab .fc-card-scene.is-revealed .fc-card-face--front,
+.play-tab .clue-card-low.revealed .fc-card-face--front { border-color: #C8FF00 !important; }
+.play-tab .clue-card-high.revealed .fc-card-face--front { border-color: #FF4444 !important; }
+.play-tab .clue-revealed,
+.play-tab .fc-card-val {
+  font-size: 18px !important;
+  color: #E0E0E0 !important;
+  font-weight: 600 !important;
+  font-family: "JetBrains Mono", monospace !important;
 }
-#fc-play-root .fc-card-face--front {
-  background: #111111 !important;
-  border: 1px solid #C8FF00 !important;
-  box-shadow: none !important;
-}
-#fc-play-root .fc-card-lbl {
+.play-tab .fc-card-lbl {
   color: #666666 !important;
-  text-shadow: none !important;
+  font-size: 10px !important;
 }
-#fc-play-root .fc-card-val {
-  color: #F0F0F0 !important;
-  font-weight: 600 !important;
-  text-shadow: none !important;
-}
-
-#fc-play-root .fc-card-badge {
+.play-tab .fc-card-badge,
+.play-tab .badge-low,
+.play-tab .badge-high {
+  position: absolute !important;
   top: 10px !important;
   left: 10px !important;
-  font-size: 10px !important;
+  font-size: 9px !important;
   font-weight: 700 !important;
   letter-spacing: 0.12em !important;
-  padding: 3px 8px !important;
+  padding: 3px 7px !important;
   border-radius: 3px !important;
-  box-shadow: none !important;
-  text-shadow: none !important;
 }
-#fc-play-root .fc-badge--low {
+.play-tab .badge-low,
+.play-tab .fc-badge--low {
   background: #1A1A1A !important;
-  color: #555555 !important;
+  color: #777777 !important;
   border: 1px solid #2A2A2A !important;
 }
-#fc-play-root .fc-badge--high {
+.play-tab .badge-high,
+.play-tab .fc-badge--high {
   background: #1A0808 !important;
-  color: #FF4444 !important;
+  color: #CC3333 !important;
   border: 1px solid #3A1010 !important;
 }
 
-/* Live stats strip */
-#fc-play-root .fc-play-live-strip {
+.play-tab .stats-row {
   display: flex !important;
   flex-direction: row !important;
   align-items: stretch !important;
   width: 100% !important;
   max-width: 900px !important;
-  margin: 24px auto !important;
-  padding: 16px 0 !important;
+  margin: 20px auto !important;
   border-top: 1px solid #1E1E1E !important;
   border-bottom: 1px solid #1E1E1E !important;
+  gap: 0 !important;
+  padding: 0 !important;
   background: transparent !important;
-  box-shadow: none !important;
 }
-#fc-play-root .fc-play-stat {
+.play-tab .stats-row > div {
   flex: 1 !important;
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  justify-content: center !important;
-  text-align: center !important;
   min-width: 0 !important;
-  border-right: 1px solid #1E1E1E !important;
-  padding: 0 8px !important;
-}
-#fc-play-root .fc-play-stat:last-child { border-right: none !important; }
-#fc-play-root .fc-play-stat-lbl {
-  font-size: 10px !important;
-  text-transform: uppercase !important;
-  letter-spacing: 0.12em !important;
-  color: #444444 !important;
-  margin: 0 0 6px !important;
-  font-weight: 600 !important;
-}
-#fc-play-root .fc-play-stat-val {
-  font-size: 28px !important;
-  font-weight: 700 !important;
-  font-family: "JetBrains Mono", ui-monospace, monospace !important;
-  color: #F0F0F0 !important;
+  padding: 0 !important;
   margin: 0 !important;
-  line-height: 1.1 !important;
+  background: transparent !important;
+  border: none !important;
 }
-#fc-play-root .fc-play-stat-val--tokens-ok { color: #C8FF00 !important; }
-#fc-play-root .fc-play-stat-val--tokens-warn { color: #FF4444 !important; }
-#fc-play-root .fc-play-stat-val--rew-pos { color: #C8FF00 !important; }
-#fc-play-root .fc-play-stat-val--rew-neg { color: #FF4444 !important; }
-#fc-play-root .fc-play-stat-val--rew-zero { color: #666666 !important; }
+.play-tab .stats-row > div:not(:last-child) .stat-block { border-right: 1px solid #1E1E1E !important; }
+.play-tab .stat-block {
+  padding: 16px 0 !important;
+  text-align: center !important;
+  margin: 0 !important;
+  background: transparent !important;
+}
+.play-tab .stat-label {
+  font-size: 9px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.14em !important;
+  color: #444444 !important;
+  margin: 0 0 8px !important;
+}
+.play-tab .stat-value {
+  font-size: 26px !important;
+  font-weight: 700 !important;
+  font-family: "JetBrains Mono", monospace !important;
+  color: #E0E0E0 !important;
+  line-height: 1 !important;
+  margin: 0 !important;
+}
+.play-tab .stat-value.accent { color: #C8FF00 !important; }
+.play-tab .stat-value.danger { color: #FF4444 !important; }
+.play-tab .stat-value.zero { color: #333333 !important; }
 
-/* Confidence */
-#fc-play-root .fc-play-conf {
-  max-width: 900px !important;
-  margin: 0 auto 16px !important;
-  background: #0F0F0F !important;
-  border: 1px solid #1E1E1E !important;
+.play-tab .confidence-shell {
   border-left: 3px solid #C8FF00 !important;
-  border-radius: 4px !important;
-  padding: 14px 20px !important;
+  padding: 12px 16px !important;
+  background: #0E0E0E !important;
+  border-radius: 0 4px 4px 0 !important;
+  overflow: visible !important;
+  margin: 0 auto 16px !important;
+  max-width: 900px !important;
+  border-top: 1px solid #1E1E1E !important;
+  border-right: 1px solid #1E1E1E !important;
+  border-bottom: 1px solid #1E1E1E !important;
   box-shadow: none !important;
 }
-#fc-play-root .fc-play-conf-lbl {
+.play-tab .confidence-lbl {
   font-size: 10px !important;
-  text-transform: uppercase !important;
   letter-spacing: 0.12em !important;
   color: #444444 !important;
+  text-transform: uppercase !important;
   margin: 0 0 6px !important;
-  font-weight: 600 !important;
 }
-#fc-play-root .fc-play-conf-val {
-  font-size: 16px !important;
-  font-weight: 600 !important;
-  color: #F0F0F0 !important;
+.play-tab .confidence-txt {
+  font-size: 15px !important;
+  color: #E0E0E0 !important;
+  font-family: "JetBrains Mono", monospace !important;
   margin: 0 !important;
   line-height: 1.35 !important;
 }
-#fc-play-root .fc-play-conf-val--hi { color: #C8FF00 !important; }
-#fc-play-root .fc-play-conf-val--med { color: #888888 !important; }
-#fc-play-root .fc-play-conf-val--lo { color: #FF4444 !important; }
-#fc-play-root .fc-play-conf-val--unk { color: #666666 !important; }
+.play-tab .confidence-txt--hi { color: #C8FF00 !important; }
+.play-tab .confidence-txt--med { color: #888888 !important; }
+.play-tab .confidence-txt--lo { color: #FF4444 !important; }
+.play-tab .confidence-txt--unk { color: #666666 !important; }
 
-/* Action buttons */
-#fc-play-root .fc-actions-row { gap: 10px !important; margin: 8px 0 !important; }
-#fc-play-root button.gr-button,
-#fc-play-root .gr-button {
-  min-height: 44px !important;
-  height: 44px !important;
-  border-radius: 4px !important;
-  font-size: 13px !important;
-  font-weight: 600 !important;
-  letter-spacing: 0.05em !important;
-  text-transform: uppercase !important;
-  transition: background 100ms ease, border-color 100ms ease, color 100ms ease, opacity 100ms ease !important;
-  box-shadow: none !important;
-}
-#fc-play-root button.gr-button.fc-btn--low,
-#fc-play-root .gr-button.fc-btn--low {
+.play-tab .btn-reveal-low button,
+.play-tab .btn-reveal-low .gr-button {
   background: transparent !important;
   border: 1px solid #2A2A2A !important;
-  color: #888888 !important;
-  -webkit-text-fill-color: #888888 !important;
+  color: #777777 !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  border-radius: 4px !important;
+  transition: border-color 100ms ease, color 100ms ease !important;
+  box-shadow: none !important;
 }
-#fc-play-root button.gr-button.fc-btn--low:hover:enabled,
-#fc-play-root .gr-button.fc-btn--low:hover:enabled {
+.play-tab .btn-reveal-low button:hover,
+.play-tab .btn-reveal-low .gr-button:hover {
   border-color: #C8FF00 !important;
   color: #C8FF00 !important;
-  -webkit-text-fill-color: #C8FF00 !important;
-  background: transparent !important;
-  transform: none !important;
-  box-shadow: none !important;
 }
-#fc-play-root button.gr-button.fc-btn--high,
-#fc-play-root .gr-button.fc-btn--high {
+.play-tab .btn-reveal-high button,
+.play-tab .btn-reveal-high .gr-button {
   background: transparent !important;
   border: 1px solid #3A1010 !important;
-  color: #FF4444 !important;
-  -webkit-text-fill-color: #FF4444 !important;
-}
-#fc-play-root button.gr-button.fc-btn--high:hover:enabled,
-#fc-play-root .gr-button.fc-btn--high:hover:enabled {
-  border-color: #FF6666 !important;
-  color: #FF6666 !important;
-  -webkit-text-fill-color: #FF6666 !important;
-  transform: none !important;
+  color: #CC3333 !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  border-radius: 4px !important;
+  transition: border-color 100ms ease, color 100ms ease !important;
   box-shadow: none !important;
 }
-#fc-play-root button.gr-button.fc-btn--refresh,
-#fc-play-root .gr-button.fc-btn--refresh {
+.play-tab .btn-reveal-high button:hover,
+.play-tab .btn-reveal-high .gr-button:hover {
+  border-color: #FF5555 !important;
+  color: #FF5555 !important;
+}
+.play-tab .btn-refresh button,
+.play-tab .btn-refresh .gr-button {
   background: transparent !important;
   border: 1px solid #1E1E1E !important;
-  color: #555555 !important;
-  -webkit-text-fill-color: #555555 !important;
-}
-#fc-play-root button.gr-button.fc-btn--refresh:hover:enabled,
-#fc-play-root .gr-button.fc-btn--refresh:hover:enabled {
-  border-color: #333333 !important;
-  color: #888888 !important;
-  -webkit-text-fill-color: #888888 !important;
-  transform: none !important;
+  color: #444444 !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  border-radius: 4px !important;
   box-shadow: none !important;
 }
-#fc-play-root button.gr-button.fc-btn--commit,
-#fc-play-root .gr-button.fc-btn--commit {
+.play-tab .btn-commit button,
+.play-tab .btn-commit .gr-button {
   background: #C8FF00 !important;
   border: none !important;
   color: #0A0A0A !important;
+  font-size: 12px !important;
   font-weight: 700 !important;
-  -webkit-text-fill-color: #0A0A0A !important;
-}
-#fc-play-root button.gr-button.fc-btn--commit:hover:enabled,
-#fc-play-root .gr-button.fc-btn--commit:hover:enabled {
-  background: #AEDD00 !important;
-  transform: none !important;
-  box-shadow: none !important;
-}
-#fc-play-root button.gr-button:focus-visible,
-#fc-play-root .gr-button:focus-visible {
-  outline: none !important;
-  box-shadow: 0 0 0 2px rgba(200, 255, 0, 0.4) !important;
-}
-
-/* Footer / token bar */
-#fc-play-root .fc-play-footer { margin-top: 12px !important; }
-#fc-play-root .fc-play-footer .fc-counter-row {
-  font-size: 13px !important;
-  color: #888888 !important;
-}
-#fc-play-root .fc-token-track {
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+  height: 44px !important;
+  min-height: 44px !important;
   border-radius: 4px !important;
-  background: #161616 !important;
-  border: 1px solid #1E1E1E !important;
+  transition: background 100ms ease !important;
   box-shadow: none !important;
 }
-#fc-play-root .fc-token-fill {
-  background: #C8FF00 !important;
-  box-shadow: none !important;
-  border-radius: 3px !important;
-}
-#fc-play-root .fc-token-fill--low { background: #FF4444 !important; }
-#fc-play-root .fc-token-fill--mid { background: #888888 !important; }
-#fc-play-root .fc-token-fill--hi { background: #C8FF00 !important; }
-#fc-play-root .fc-hint-amber { color: #FF6666 !important; }
+.play-tab .btn-commit button:hover,
+.play-tab .btn-commit .gr-button:hover { background: #AADD00 !important; }
 
-/* Last action + flow */
-#fc-play-root .fc-play-log,
-#fc-play-root .fc-card-log {
+.play-tab .log-panel,
+.play-tab .fc-card-log,
+.play-tab .fc-play-log,
+.play-tab .fc-trace-panel {
   background: #0D0D0D !important;
   border: 1px solid #1A1A1A !important;
   border-radius: 4px !important;
   padding: 14px 18px !important;
-  margin: 10px 0 !important;
   box-shadow: none !important;
 }
-#fc-play-root .fc-card-log h3,
-#fc-play-root .fc-play-log h3 {
+.play-tab .log-label,
+.play-tab .fc-card-log h3,
+.play-tab .fc-trace-title {
   font-size: 9px !important;
   text-transform: uppercase !important;
   letter-spacing: 0.15em !important;
   color: #333333 !important;
   margin: 0 0 8px !important;
-  font-weight: 700 !important;
 }
-#fc-play-root .fc-oneline-log,
-#fc-play-root .fc-play-log-body {
+.play-tab .log-content,
+.play-tab .fc-oneline-log,
+.play-tab .fc-trace-line,
+.play-tab .fc-trace-reason,
+.play-tab .fc-trace-empty {
   font-size: 13px !important;
-  color: #888888 !important;
-  font-family: "JetBrains Mono", ui-monospace, monospace !important;
+  color: #777777 !important;
+  font-family: "JetBrains Mono", monospace !important;
+  line-height: 1.6 !important;
 }
-#fc-play-root .fc-play-log-active { color: #C8FF00 !important; }
-#fc-play-root .fc-mute { color: #555555 !important; }
-#fc-play-root .fc-reward-pos { color: #C8FF00 !important; font-weight: 700 !important; }
-#fc-play-root .fc-reward-neg { color: #FF4444 !important; font-weight: 700 !important; }
-#fc-play-root .fc-reward-neu { color: #666666 !important; font-weight: 600 !important; }
-#fc-play-root .fc-flow-line {
-  font-size: 13px !important;
-  color: #888888 !important;
-  font-family: "JetBrains Mono", ui-monospace, monospace !important;
-}
-#fc-play-root .fc-flow-line strong { color: #C8FF00 !important; }
+.play-tab .log-content .accent,
+.play-tab .fc-play-log-active { color: #C8FF00 !important; }
+.play-tab .fc-reward-pos { color: #C8FF00 !important; }
+.play-tab .fc-reward-neg { color: #FF4444 !important; }
+.play-tab .fc-reward-neu { color: #666666 !important; }
+.play-tab .fc-flow-line { color: #777777 !important; font-family: "JetBrains Mono", monospace !important; }
+.play-tab .fc-flow-line strong { color: #C8FF00 !important; }
 
-/* Episode trace */
-#fc-play-root .fc-trace-panel {
-  background: #0D0D0D !important;
-  border: 1px solid #1A1A1A !important;
-  border-radius: 4px !important;
-  padding: 14px 18px !important;
-  box-shadow: none !important;
-  font-family: "JetBrains Mono", ui-monospace, monospace !important;
-}
-#fc-play-root .fc-trace-title {
-  font-size: 9px !important;
-  letter-spacing: 0.15em !important;
-  color: #333333 !important;
-}
-#fc-play-root .fc-trace-line,
-#fc-play-root .fc-trace-reason,
-#fc-play-root .fc-trace-empty { color: #888888 !important; }
-#fc-play-root .fc-trace-pos { color: #C8FF00 !important; }
-#fc-play-root .fc-trace-neg { color: #FF4444 !important; }
-#fc-play-root .fc-trace-neu { color: #666666 !important; }
-#fc-play-root .fc-trace-final-lbl {
-  margin-bottom: 4px !important;
-  font-size: 9px !important;
-  color: #333333 !important;
-  text-transform: uppercase !important;
-  letter-spacing: 0.12em !important;
-  font-weight: 700 !important;
-}
-
-#fc-play-root .fc-history-box { border-radius: 0 !important; }
-
-/* History entries inside accordion */
-#fc-play-root .fc-history-entries { padding: 8px 12px 12px !important; }
-#fc-play-root .fc-hist-card {
-  background: #0D0D0D !important;
-  border: 1px solid #1A1A1A !important;
-  border-radius: 4px !important;
-  border-left: 3px solid #C8FF00 !important;
-  box-shadow: none !important;
-  font-family: "JetBrains Mono", ui-monospace, monospace !important;
-  font-size: 13px !important;
-  color: #888888 !important;
-}
-#fc-play-root .fc-hist-card--final { border-left-color: #888888 !important; background: #161616 !important; }
-#fc-play-root .fc-hist-st {
-  font-size: 9px !important;
-  letter-spacing: 0.12em !important;
-  color: #444444 !important;
-}
-
-#fc-play-root .fc-play-flow-live { color: #C8FF00 !important; }
-#fc-play-root .fc-play-log-meta {
-  font-size: 12px !important;
-  margin: 8px 0 0 !important;
-  font-family: "JetBrains Mono", ui-monospace, monospace !important;
-}
-#fc-play-root .fc-play-log-detail {
-  font-size: 12px !important;
-  margin: 8px 0 0 !important;
-  font-family: "JetBrains Mono", ui-monospace, monospace !important;
-}
-#fc-play-root .fc-conf-outer {
-  max-width: 900px !important;
-  margin-left: auto !important;
-  margin-right: auto !important;
-}
-
-/* Episode history accordion (elem_id on wrapper or details) */
-#fc-play-root #fc-history-accordion details,
-#fc-play-root #fc-history-accordion.gr-accordion,
-#fc-play-root details.fc-play-history-acc {
+.play-tab .episode-accordion .label-wrap,
+.play-tab .episode-accordion label {
   background: #111111 !important;
   border: 1px solid #1E1E1E !important;
   border-radius: 4px !important;
-  margin-top: 12px !important;
-  box-shadow: none !important;
-}
-#fc-play-root #fc-history-accordion summary,
-#fc-play-root details.fc-play-history-acc > summary,
-#fc-play-root #fc-history-accordion details > summary {
-  list-style: none !important;
-  cursor: pointer !important;
-  font-size: 12px !important;
-  color: #555555 !important;
+  color: #444444 !important;
+  font-size: 11px !important;
   text-transform: uppercase !important;
   letter-spacing: 0.1em !important;
-  font-weight: 600 !important;
-  padding: 12px 14px !important;
 }
-#fc-play-root #fc-history-accordion summary::-webkit-details-marker,
-#fc-play-root details.fc-play-history-acc summary::-webkit-details-marker {
-  display: none !important;
-}
-#fc-play-root #fc-history-accordion summary::before,
-#fc-play-root details.fc-play-history-acc > summary::before {
-  content: "▸" !important;
-  display: inline-block !important;
-  margin-right: 8px !important;
-  color: #444444 !important;
-  font-size: 10px !important;
-  transition: transform 120ms ease !important;
-}
-#fc-play-root #fc-history-accordion[open] summary::before,
-#fc-play-root #fc-history-accordion details[open] > summary::before,
-#fc-play-root details.fc-play-history-acc[open] > summary::before {
-  transform: rotate(90deg) !important;
+.play-tab .status-hint,
+.play-tab .fc-play-flow-live {
+  font-size: 12px !important;
+  color: #C8FF00 !important;
+  font-family: "JetBrains Mono", monospace !important;
+  padding: 8px 0 !important;
 }
 
-/* Accordion when elem_id is on outer div wrapper */
-#fc-play-root div#fc-history-accordion {
-  background: #111111 !important;
-  border: 1px solid #1E1E1E !important;
-  border-radius: 4px !important;
-  margin-top: 12px !important;
-  box-shadow: none !important;
-}
-
-#fc-play-root .fc-live-outer,
-#fc-play-root .fc-footer-wrap,
-#fc-play-root .fc-trace-outer {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-#fc-play-root .fc-play-live-outer {
-  max-width: 900px !important;
-  margin-left: auto !important;
-  margin-right: auto !important;
-}
-#fc-play-root button:active:not(:disabled),
-#fc-play-root .gr-button:active:not(:disabled) {
-  transform: none !important;
-}
+.play-tab .fc-conf-outer,
+.play-tab .fc-live-outer,
+.play-tab .fc-footer-wrap,
+.play-tab .fc-trace-outer { background: transparent !important; border: none !important; overflow: visible !important; }
+.play-tab .fc-history-entries { background: transparent !important; }
+.play-tab button:active,
+.play-tab .gr-button:active { transform: none !important; }
 </style>
 """
 
@@ -1473,36 +1319,43 @@ def _render_six_clues(
 ) -> str:
     if not revealed or len(revealed) < 6:
         revealed = [HIDDEN] * 6
-    out = ['<div class="fc-clue-arena fc-play-clue-arena"><div class="fc-clue-grid">']
+    out = [
+        '<div class="fc-clue-arena fc-play-clue-arena card-grid">'
+        '<div class="fc-clue-grid">'
+    ]
     for i in range(6):
         raw = revealed[i]  # type: ignore[index]
         label, value, hidden = _clue_label_value(raw)
         bcls = _tier_badge_class(i)
         bt = _tier_label(i)
+        tier_card = "clue-card-low" if i < 3 else "clue-card-high"
+        badge_x = "badge-low" if i < 3 else "badge-high"
         if hidden:
             state = "is-hidden"
             newc = ""
+            rev_mark = ""
             inner = (
                 f'<div class="fc-card-face fc-card-face--back">'
-                f'<span class="fc-card-badge {bcls}">{bt}</span>'
-                f'<div class="fc-card-question">???</div></div>'
+                f'<span class="fc-card-badge {badge_x} {bcls}">{bt}</span>'
+                f'<div class="fc-card-question clue-unknown">???</div></div>'
             )
         else:
             newc = " is-new" if (highlight is not None and i == highlight) else ""
             state = f"is-revealed{newc}"
+            rev_mark = " revealed"
             vhtml = _html_escape(value)
             lhtml = _html_escape(label)
             inner = (
                 f'<div class="fc-card-face fc-card-face--back">'
-                f'<span class="fc-card-badge {bcls}">{bt}</span>'
-                f'<div class="fc-card-question">???</div></div>'
+                f'<span class="fc-card-badge {badge_x} {bcls}">{bt}</span>'
+                f'<div class="fc-card-question clue-unknown">???</div></div>'
                 f'<div class="fc-card-face fc-card-face--front">'
-                f'<span class="fc-card-badge {bcls}">{bt}</span>'
+                f'<span class="fc-card-badge {badge_x} {bcls}">{bt}</span>'
                 f'<div class="fc-card-lbl">{lhtml}</div>'
-                f'<div class="fc-card-val">{vhtml}</div></div>'
+                f'<div class="fc-card-val clue-revealed">{vhtml}</div></div>'
             )
         out.append(
-            f'<div class="fc-card-scene {state}">'
+            f'<div class="fc-card-scene {tier_card} {state}{rev_mark}">'
             f'<div class="fc-card-inner">{inner}</div></div>'
         )
     out.append("</div></div>")
@@ -1675,13 +1528,13 @@ def _last_step_html(
     detail = (
         ""
         if last_action is None
-        else f"<p class='fc-mute fc-play-log-detail'>{_html_escape(outcome)}</p>"
+        else f"<p class='fc-mute fc-play-log-detail log-content'>{_html_escape(outcome)}</p>"
     )
     return (
-        f"<div class='fc-card-log fc-play-log'>"
-        f"<h3>Last action</h3>"
-        f"<p class='fc-oneline-log{active}'>{line}</p>"
-        f"<p class='fc-play-log-meta'><span class='fc-mute'>"
+        f"<div class='fc-card-log fc-play-log log-panel'>"
+        f"<h3 class='log-label'>Last action</h3>"
+        f"<p class='fc-oneline-log log-content{active}'>{line}</p>"
+        f"<p class='fc-play-log-meta log-content'><span class='fc-mute'>"
         f"Step reward</span> <span class='{cls}'>{rc}</span> · "
         f"<span class='fc-mute'>Tokens</span> "
         f"{o.tokens} / {MAX_TOKENS} · <span class='fc-mute'>Step</span> {o.step_number}</p>"
@@ -1940,29 +1793,68 @@ def _update_live_stats(prev: dict | None, o) -> dict:
     }
 
 
-def _live_stats_html(stats: dict | None) -> str:
+def _stat_html_tokens_left(stats: dict | None) -> str:
+    s = {**LIVE_STATS_DEFAULT, **(stats or {})}
+    cur = int(s["current_tokens"])
+    cls = "accent" if cur > 20 else "danger"
+    return (
+        f'<div class="stat-block">'
+        f'<div class="stat-label">Tokens left</div>'
+        f'<div class="stat-value {cls}">{cur}</div>'
+        f"</div>"
+    )
+
+
+def _stat_html_tokens_used(stats: dict | None) -> str:
     s = {**LIVE_STATS_DEFAULT, **(stats or {})}
     cur = int(s["current_tokens"])
     used = max(0, MAX_TOKENS - cur)
-    steps = int(s["step_count"])
-    tot = float(s["total_reward"])
-    tok_cls = (
-        "fc-play-stat-val--tokens-warn" if cur <= 20 else "fc-play-stat-val--tokens-ok"
+    return (
+        f'<div class="stat-block">'
+        f'<div class="stat-label">Tokens used</div>'
+        f'<div class="stat-value">{used}</div>'
+        f"</div>"
     )
+
+
+def _stat_html_steps(stats: dict | None) -> str:
+    s = {**LIVE_STATS_DEFAULT, **(stats or {})}
+    steps = int(s["step_count"])
+    return (
+        f'<div class="stat-block">'
+        f'<div class="stat-label">Steps</div>'
+        f'<div class="stat-value">{steps}</div>'
+        f"</div>"
+    )
+
+
+def _stat_html_reward(stats: dict | None) -> str:
+    s = {**LIVE_STATS_DEFAULT, **(stats or {})}
+    tot = float(s["total_reward"])
     if tot > 1e-9:
-        rcls, ts = "fc-play-stat-val--rew-pos", f"+{tot:.2f}"
+        cls, ts = "accent", f"+{tot:.2f}"
     elif tot < -1e-9:
-        rcls, ts = "fc-play-stat-val--rew-neg", f"{tot:.2f}"
+        cls, ts = "danger", f"{tot:.2f}"
     else:
-        rcls, ts = "fc-play-stat-val--rew-zero", f"{tot:.2f}"
-    return f"""<div class="fc-live-wrap fc-play-live-outer">
-  <div class="fc-play-live-strip">
-    <div class="fc-play-stat"><span class="fc-play-stat-lbl">Tokens left</span><p class="fc-play-stat-val {tok_cls}">{cur}</p></div>
-    <div class="fc-play-stat"><span class="fc-play-stat-lbl">Tokens used</span><p class="fc-play-stat-val">{used}</p></div>
-    <div class="fc-play-stat"><span class="fc-play-stat-lbl">Steps</span><p class="fc-play-stat-val">{steps}</p></div>
-    <div class="fc-play-stat"><span class="fc-play-stat-lbl">Total reward</span><p class="fc-play-stat-val {rcls}">{ts}</p></div>
-  </div>
-</div>"""
+        cls, ts = "zero", f"{tot:.2f}"
+    return (
+        f'<div class="stat-block">'
+        f'<div class="stat-label">Total reward</div>'
+        f'<div class="stat-value {cls}">{ts}</div>'
+        f"</div>"
+    )
+
+
+def _live_stats_html(stats: dict | None) -> str:
+    """Single-row HTML (all four stats); Play tab uses four gr.HTML outputs instead."""
+    return (
+        '<div class="stats-row">'
+        + _stat_html_tokens_left(stats)
+        + _stat_html_tokens_used(stats)
+        + _stat_html_steps(stats)
+        + _stat_html_reward(stats)
+        + "</div>"
+    )
 
 
 def _compute_confidence_level(live: dict | None) -> str:
@@ -1983,22 +1875,23 @@ def _confidence_html(level: str) -> str:
     tip = "Confidence is based on reward trend and actions taken"
     u = (level or "UNKNOWN").upper()
     if u == "UNKNOWN":
-        vcls = "fc-play-conf-val--unk"
+        vcls = "confidence-txt--unk"
         text = "Unknown — need more data."
     elif u == "HIGH":
-        vcls = "fc-play-conf-val--hi"
+        vcls = "confidence-txt--hi"
         text = "High — strong reward trajectory."
     elif u == "MEDIUM":
-        vcls = "fc-play-conf-val--med"
+        vcls = "confidence-txt--med"
         text = "Medium — mixed signals."
     else:
-        vcls = "fc-play-conf-val--lo"
+        vcls = "confidence-txt--lo"
         text = "Low — costly or negative trend."
     et = _html_escape(tip)
+    tx = _html_escape(text)
     return (
-        f'<div class="fc-play-conf" title="{et}">'
-        f'<p class="fc-play-conf-lbl">Confidence</p>'
-        f'<p class="fc-play-conf-val {vcls}" title="{et}">{_html_escape(text)}</p>'
+        f'<div class="confidence-shell" title="{et}">'
+        f'<div class="confidence-lbl">Confidence</div>'
+        f'<div class="confidence-txt {vcls}" title="{et}">{tx}</div>'
         f"</div>"
     )
 
@@ -2009,11 +1902,12 @@ def build_blocks() -> gr.Blocks:
         theme=gr.themes.Base(),
         css=CSS_STRING,
     ) as demo:
+        gr.HTML(GRADIO_APP_FONT_LINKS, elem_id="fc-app-font-links")
         with gr.Tabs():
             with gr.Tab("Play"):
                 with gr.Column(
                     elem_id="fc-play-root",
-                    elem_classes=["fc-play-page"],
+                    elem_classes=["play-tab", "fc-play-page"],
                 ):
                     gr.HTML(PLAY_TAB_HEAD_INJECT, elem_id="fc-play-style-inject")
                     st = gr.State()  # type: ignore[var-annotated]  # { "env", "pre_obs" }
@@ -2026,24 +1920,46 @@ def build_blocks() -> gr.Blocks:
                     gr.HTML(
                         STATIC_HEADER,
                         elem_id="fc-play-header",
-                        elem_classes=["fc-play-header-slot"],
+                        elem_classes=["fc-play-header-slot", "play-header"],
                     )
 
                     b_reset = gr.Button(
                         "Start new episode",
                         elem_id="fc-play-btn-start",
-                        elem_classes=["fc-btn--start", "gr-button", "gr-button-primary"],
+                        elem_classes=[
+                            "start-btn",
+                            "fc-btn--start",
+                            "gr-button",
+                            "gr-button-primary",
+                        ],
                     )
 
                     card_block = gr.HTML(
                         _render_six_clues((HIDDEN,) * 6, None),
                         elem_id="fc-play-cards",
                     )
-                    live_stats_display = gr.HTML(
-                        _live_stats_html(dict(LIVE_STATS_DEFAULT)),
-                        elem_id="fc-play-live-stats",
-                        elem_classes=["fc-live-outer"],
-                    )
+                    ls0 = dict(LIVE_STATS_DEFAULT)
+                    with gr.Row(elem_classes=["stats-row"]):
+                        stat_html_tok_left = gr.HTML(
+                            _stat_html_tokens_left(ls0),
+                            elem_id="fc-play-stat-tokens-left",
+                            elem_classes=["stat-block"],
+                        )
+                        stat_html_tok_used = gr.HTML(
+                            _stat_html_tokens_used(ls0),
+                            elem_id="fc-play-stat-tokens-used",
+                            elem_classes=["stat-block"],
+                        )
+                        stat_html_steps = gr.HTML(
+                            _stat_html_steps(ls0),
+                            elem_id="fc-play-stat-steps",
+                            elem_classes=["stat-block"],
+                        )
+                        stat_html_reward = gr.HTML(
+                            _stat_html_reward(ls0),
+                            elem_id="fc-play-stat-reward",
+                            elem_classes=["stat-block"],
+                        )
                     confidence_display = gr.HTML(
                         _confidence_html("UNKNOWN"),
                         elem_id="fc-play-confidence",
@@ -2055,26 +1971,46 @@ def build_blocks() -> gr.Blocks:
                             "Reveal Low",
                             interactive=False,
                             elem_id="fc-play-btn-low",
-                            elem_classes=["gr-button", "fc-btn--low", "gr-button-primary"],
+                            elem_classes=[
+                                "btn-reveal-low",
+                                "gr-button",
+                                "fc-btn--low",
+                                "gr-button-primary",
+                            ],
                         )
                         b_high = gr.Button(
                             "Reveal High",
                             interactive=False,
                             elem_id="fc-play-btn-high",
-                            elem_classes=["gr-button", "fc-btn--high", "gr-button-primary"],
+                            elem_classes=[
+                                "btn-reveal-high",
+                                "gr-button",
+                                "fc-btn--high",
+                                "gr-button-primary",
+                            ],
                         )
                     with gr.Row(elem_classes=["fc-actions-row fc-play-actions-2"]):
                         b_skip = gr.Button(
                             "Refresh",
                             interactive=False,
                             elem_id="fc-play-btn-refresh",
-                            elem_classes=["gr-button", "fc-btn--refresh", "gr-button-primary"],
+                            elem_classes=[
+                                "btn-refresh",
+                                "gr-button",
+                                "fc-btn--refresh",
+                                "gr-button-primary",
+                            ],
                         )
                         b_commit = gr.Button(
                             "Commit",
                             interactive=False,
                             elem_id="fc-play-btn-commit",
-                            elem_classes=["gr-button", "fc-btn--commit", "gr-button-primary"],
+                            elem_classes=[
+                                "btn-commit",
+                                "gr-button",
+                                "fc-btn--commit",
+                                "gr-button-primary",
+                            ],
                         )
 
                     footer_status = gr.HTML(
@@ -2083,31 +2019,33 @@ def build_blocks() -> gr.Blocks:
                         elem_classes=["fc-footer-wrap"],
                     )
                     last_block = gr.HTML(
-                        "<div class='fc-card-log fc-play-log'>"
-                        "<h3>Last action</h3><p class='fc-mute' style='margin:0'>"
+                        "<div class='fc-card-log fc-play-log log-panel'>"
+                        "<h3 class=\"log-label\">Last action</h3><p class='fc-mute log-content' style='margin:0'>"
                         "No action yet. Start a new episode.</p></div>",
                         elem_id="fc-play-last-action",
+                        elem_classes=["log-panel"],
                     )
                     episode_trace_display = gr.HTML(
                         _episode_trace_html([], False),
                         elem_id="fc-play-episode-trace",
-                        elem_classes=["fc-trace-outer"],
+                        elem_classes=["fc-trace-outer", "log-panel"],
                     )
                     flow = gr.HTML(
-                        "<p class='fc-flow-line'>"
+                        "<p class='fc-flow-line status-hint'>"
                         "Press <strong>Start new episode</strong> to begin.</p>",
                         elem_id="fc-play-flow",
+                        elem_classes=["status-hint"],
                     )
                     with gr.Accordion(
                         "Episode history",
                         open=False,
                         elem_id="fc-history-accordion",
-                        elem_classes=["fc-play-history-acc"],
+                        elem_classes=["fc-play-history-acc", "episode-accordion"],
                     ):
                         history_display = gr.HTML(
                             _log_to_html(HISTORY_STATE_INIT),
                             elem_id="fc-play-history-body",
-                            elem_classes=["fc-history-box"],
+                            elem_classes=["fc-history-box", "log-panel"],
                         )
                 _out_play = [
                     st,
@@ -2116,7 +2054,10 @@ def build_blocks() -> gr.Blocks:
                     live_stats,
                     confidence_level,
                     card_block,
-                    live_stats_display,
+                    stat_html_tok_left,
+                    stat_html_tok_used,
+                    stat_html_steps,
+                    stat_html_reward,
                     confidence_display,
                     last_block,
                     episode_trace_display,
@@ -2128,7 +2069,7 @@ def build_blocks() -> gr.Blocks:
                     b_skip,
                     b_commit,
                 ]
-                n_out = 17
+                n_out = 20
                 n_skip_updates = n_out - 1
 
                 def on_start() -> tuple:
@@ -2154,7 +2095,10 @@ def build_blocks() -> gr.Blocks:
                         ls0,
                         c0,
                         _render_six_clues(o.revealed_clues, None),
-                        _live_stats_html(ls0),
+                        _stat_html_tokens_left(ls0),
+                        _stat_html_tokens_used(ls0),
+                        _stat_html_steps(ls0),
+                        _stat_html_reward(ls0),
                         _confidence_html(c0),
                         _last_step_html(
                             o,
@@ -2201,7 +2145,10 @@ def build_blocks() -> gr.Blocks:
                         new_live,
                         c_new,
                         _render_six_clues(o.revealed_clues, new_idx),
-                        _live_stats_html(new_live),
+                        _stat_html_tokens_left(new_live),
+                        _stat_html_tokens_used(new_live),
+                        _stat_html_steps(new_live),
+                        _stat_html_reward(new_live),
                         _confidence_html(c_new),
                         _last_step_html(
                             o,
