@@ -678,10 +678,557 @@ summary { color: #e5e7eb; font-weight: 700; letter-spacing: 0.02em; }
 """
 
 STATIC_HEADER = """
-<div class="fc-game-header">
-  <h1>FC Decision Lab</h1>
-  <p class="fc-sub">Reveal clues strategically. Spend tokens wisely.</p>
+<div class="fc-play-page-header">
+  <h1 class="fc-play-h1">FC Decision Lab</h1>
+  <p class="fc-play-tagline">Reveal clues strategically. Spend tokens wisely.</p>
+  <div class="fc-play-header-line" aria-hidden="true"></div>
 </div>
+"""
+
+# Scoped Play tab only: fonts + overrides (flat, #0A0A0A shell, accent #C8FF00).
+PLAY_TAB_HEAD_INJECT = r"""
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+#fc-play-root, #fc-play-root * {
+  box-sizing: border-box;
+}
+#fc-play-root.fc-play-page {
+  padding: 4px 12px 32px !important;
+  max-width: 960px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+#fc-play-root {
+  font-family: Inter, system-ui, -apple-system, Segoe UI, sans-serif !important;
+  color: #F0F0F0 !important;
+  background: #0A0A0A !important;
+  --fc-accent: #C8FF00;
+  --fc-accent-hover: #AEDD00;
+  --fc-bg: #0A0A0A;
+  --fc-surface: #111111;
+  --fc-surface2: #161616;
+  --fc-border: #1E1E1E;
+  --fc-text: #F0F0F0;
+  --fc-muted: #666666;
+  --fc-danger: #FF4444;
+  --fc-low: #888888;
+}
+
+/* Page header */
+#fc-play-root .fc-play-page-header { margin: 0 0 0; padding: 0 0 16px; }
+#fc-play-root .fc-play-h1 {
+  font-size: 28px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.5px !important;
+  color: #F0F0F0 !important;
+  margin: 0 0 8px !important;
+  line-height: 1.15 !important;
+  text-shadow: none !important;
+}
+#fc-play-root .fc-play-tagline {
+  font-size: 13px !important;
+  font-weight: 400 !important;
+  color: #555555 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+  margin: 0 0 14px !important;
+  line-height: 1.45 !important;
+}
+#fc-play-root .fc-play-header-line {
+  height: 1px !important;
+  background: #1E1E1E !important;
+  margin: 0 !important;
+  border: none !important;
+}
+
+/* Start episode */
+#fc-play-root button.gr-button.fc-btn--start,
+#fc-play-root .gr-button.fc-btn--start {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-height: 48px !important;
+  height: 48px !important;
+  background: #C8FF00 !important;
+  color: #0A0A0A !important;
+  font-weight: 700 !important;
+  font-size: 14px !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase !important;
+  border-radius: 4px !important;
+  border: none !important;
+  box-shadow: none !important;
+  transition: background 120ms ease, color 120ms ease, opacity 120ms ease !important;
+}
+#fc-play-root button.gr-button.fc-btn--start:hover:enabled,
+#fc-play-root .gr-button.fc-btn--start:hover:enabled {
+  background: #AEDD00 !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+#fc-play-root button.gr-button.fc-btn--start:focus-visible,
+#fc-play-root .gr-button.fc-btn--start:focus-visible {
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(200, 255, 0, 0.4) !important;
+}
+
+/* Clue grid + cards: flat, no gold */
+#fc-play-root .fc-clue-arena,
+#fc-play-root .fc-play-clue-arena { max-width: 900px; margin: 0 auto; padding: 8px 0 12px; }
+#fc-play-root .fc-clue-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 12px !important;
+}
+@media (max-width: 700px) {
+  #fc-play-root .fc-clue-grid { grid-template-columns: repeat(2, 1fr) !important; }
+}
+@media (max-width: 420px) {
+  #fc-play-root .fc-clue-grid { grid-template-columns: 1fr !important; }
+}
+
+#fc-play-root .fc-card-scene {
+  perspective: 1000px !important;
+  min-height: 120px !important;
+  border-radius: 6px !important;
+  box-shadow: none !important;
+}
+#fc-play-root .fc-card-inner {
+  min-height: 120px !important;
+  border-radius: 6px !important;
+  transition: transform 0.45s ease !important;
+  box-shadow: none !important;
+}
+#fc-play-root .fc-card-scene.is-hidden:hover .fc-card-inner {
+  transform: rotateY(0deg) scale(1.02) !important;
+  filter: none !important;
+}
+#fc-play-root .fc-card-scene.is-new .fc-card-face--front {
+  box-shadow: none !important;
+  animation: none !important;
+}
+#fc-play-root .fc-card-scene.is-hidden .fc-card-face--back {
+  box-shadow: none !important;
+}
+
+#fc-play-root .fc-card-face {
+  border-radius: 6px !important;
+  padding: 24px !important;
+  box-shadow: none !important;
+  border: 1px solid #1E1E1E !important;
+}
+#fc-play-root .fc-card-face--back {
+  background: #111111 !important;
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(255, 255, 255, 0.02) 2px,
+    rgba(255, 255, 255, 0.02) 4px
+  ) !important;
+  color: #2A2A2A !important;
+}
+#fc-play-root .fc-card-question {
+  font-size: 32px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.3em !important;
+  font-family: "JetBrains Mono", ui-monospace, monospace !important;
+  color: #2A2A2A !important;
+  text-shadow: none !important;
+}
+#fc-play-root .fc-card-scene.is-revealed .fc-card-face--front {
+  border: 1px solid #C8FF00 !important;
+}
+#fc-play-root .fc-card-face--front {
+  background: #111111 !important;
+  border: 1px solid #C8FF00 !important;
+  box-shadow: none !important;
+}
+#fc-play-root .fc-card-lbl {
+  color: #666666 !important;
+  text-shadow: none !important;
+}
+#fc-play-root .fc-card-val {
+  color: #F0F0F0 !important;
+  font-weight: 600 !important;
+  text-shadow: none !important;
+}
+
+#fc-play-root .fc-card-badge {
+  top: 10px !important;
+  left: 10px !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.12em !important;
+  padding: 3px 8px !important;
+  border-radius: 3px !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+#fc-play-root .fc-badge--low {
+  background: #1A1A1A !important;
+  color: #555555 !important;
+  border: 1px solid #2A2A2A !important;
+}
+#fc-play-root .fc-badge--high {
+  background: #1A0808 !important;
+  color: #FF4444 !important;
+  border: 1px solid #3A1010 !important;
+}
+
+/* Live stats strip */
+#fc-play-root .fc-play-live-strip {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: stretch !important;
+  width: 100% !important;
+  max-width: 900px !important;
+  margin: 24px auto !important;
+  padding: 16px 0 !important;
+  border-top: 1px solid #1E1E1E !important;
+  border-bottom: 1px solid #1E1E1E !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+#fc-play-root .fc-play-stat {
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  min-width: 0 !important;
+  border-right: 1px solid #1E1E1E !important;
+  padding: 0 8px !important;
+}
+#fc-play-root .fc-play-stat:last-child { border-right: none !important; }
+#fc-play-root .fc-play-stat-lbl {
+  font-size: 10px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.12em !important;
+  color: #444444 !important;
+  margin: 0 0 6px !important;
+  font-weight: 600 !important;
+}
+#fc-play-root .fc-play-stat-val {
+  font-size: 28px !important;
+  font-weight: 700 !important;
+  font-family: "JetBrains Mono", ui-monospace, monospace !important;
+  color: #F0F0F0 !important;
+  margin: 0 !important;
+  line-height: 1.1 !important;
+}
+#fc-play-root .fc-play-stat-val--tokens-ok { color: #C8FF00 !important; }
+#fc-play-root .fc-play-stat-val--tokens-warn { color: #FF4444 !important; }
+#fc-play-root .fc-play-stat-val--rew-pos { color: #C8FF00 !important; }
+#fc-play-root .fc-play-stat-val--rew-neg { color: #FF4444 !important; }
+#fc-play-root .fc-play-stat-val--rew-zero { color: #666666 !important; }
+
+/* Confidence */
+#fc-play-root .fc-play-conf {
+  max-width: 900px !important;
+  margin: 0 auto 16px !important;
+  background: #0F0F0F !important;
+  border: 1px solid #1E1E1E !important;
+  border-left: 3px solid #C8FF00 !important;
+  border-radius: 4px !important;
+  padding: 14px 20px !important;
+  box-shadow: none !important;
+}
+#fc-play-root .fc-play-conf-lbl {
+  font-size: 10px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.12em !important;
+  color: #444444 !important;
+  margin: 0 0 6px !important;
+  font-weight: 600 !important;
+}
+#fc-play-root .fc-play-conf-val {
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  color: #F0F0F0 !important;
+  margin: 0 !important;
+  line-height: 1.35 !important;
+}
+#fc-play-root .fc-play-conf-val--hi { color: #C8FF00 !important; }
+#fc-play-root .fc-play-conf-val--med { color: #888888 !important; }
+#fc-play-root .fc-play-conf-val--lo { color: #FF4444 !important; }
+#fc-play-root .fc-play-conf-val--unk { color: #666666 !important; }
+
+/* Action buttons */
+#fc-play-root .fc-actions-row { gap: 10px !important; margin: 8px 0 !important; }
+#fc-play-root button.gr-button,
+#fc-play-root .gr-button {
+  min-height: 44px !important;
+  height: 44px !important;
+  border-radius: 4px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.05em !important;
+  text-transform: uppercase !important;
+  transition: background 100ms ease, border-color 100ms ease, color 100ms ease, opacity 100ms ease !important;
+  box-shadow: none !important;
+}
+#fc-play-root button.gr-button.fc-btn--low,
+#fc-play-root .gr-button.fc-btn--low {
+  background: transparent !important;
+  border: 1px solid #2A2A2A !important;
+  color: #888888 !important;
+  -webkit-text-fill-color: #888888 !important;
+}
+#fc-play-root button.gr-button.fc-btn--low:hover:enabled,
+#fc-play-root .gr-button.fc-btn--low:hover:enabled {
+  border-color: #C8FF00 !important;
+  color: #C8FF00 !important;
+  -webkit-text-fill-color: #C8FF00 !important;
+  background: transparent !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+#fc-play-root button.gr-button.fc-btn--high,
+#fc-play-root .gr-button.fc-btn--high {
+  background: transparent !important;
+  border: 1px solid #3A1010 !important;
+  color: #FF4444 !important;
+  -webkit-text-fill-color: #FF4444 !important;
+}
+#fc-play-root button.gr-button.fc-btn--high:hover:enabled,
+#fc-play-root .gr-button.fc-btn--high:hover:enabled {
+  border-color: #FF6666 !important;
+  color: #FF6666 !important;
+  -webkit-text-fill-color: #FF6666 !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+#fc-play-root button.gr-button.fc-btn--refresh,
+#fc-play-root .gr-button.fc-btn--refresh {
+  background: transparent !important;
+  border: 1px solid #1E1E1E !important;
+  color: #555555 !important;
+  -webkit-text-fill-color: #555555 !important;
+}
+#fc-play-root button.gr-button.fc-btn--refresh:hover:enabled,
+#fc-play-root .gr-button.fc-btn--refresh:hover:enabled {
+  border-color: #333333 !important;
+  color: #888888 !important;
+  -webkit-text-fill-color: #888888 !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+#fc-play-root button.gr-button.fc-btn--commit,
+#fc-play-root .gr-button.fc-btn--commit {
+  background: #C8FF00 !important;
+  border: none !important;
+  color: #0A0A0A !important;
+  font-weight: 700 !important;
+  -webkit-text-fill-color: #0A0A0A !important;
+}
+#fc-play-root button.gr-button.fc-btn--commit:hover:enabled,
+#fc-play-root .gr-button.fc-btn--commit:hover:enabled {
+  background: #AEDD00 !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+#fc-play-root button.gr-button:focus-visible,
+#fc-play-root .gr-button:focus-visible {
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(200, 255, 0, 0.4) !important;
+}
+
+/* Footer / token bar */
+#fc-play-root .fc-play-footer { margin-top: 12px !important; }
+#fc-play-root .fc-play-footer .fc-counter-row {
+  font-size: 13px !important;
+  color: #888888 !important;
+}
+#fc-play-root .fc-token-track {
+  border-radius: 4px !important;
+  background: #161616 !important;
+  border: 1px solid #1E1E1E !important;
+  box-shadow: none !important;
+}
+#fc-play-root .fc-token-fill {
+  background: #C8FF00 !important;
+  box-shadow: none !important;
+  border-radius: 3px !important;
+}
+#fc-play-root .fc-token-fill--low { background: #FF4444 !important; }
+#fc-play-root .fc-token-fill--mid { background: #888888 !important; }
+#fc-play-root .fc-token-fill--hi { background: #C8FF00 !important; }
+#fc-play-root .fc-hint-amber { color: #FF6666 !important; }
+
+/* Last action + flow */
+#fc-play-root .fc-play-log,
+#fc-play-root .fc-card-log {
+  background: #0D0D0D !important;
+  border: 1px solid #1A1A1A !important;
+  border-radius: 4px !important;
+  padding: 14px 18px !important;
+  margin: 10px 0 !important;
+  box-shadow: none !important;
+}
+#fc-play-root .fc-card-log h3,
+#fc-play-root .fc-play-log h3 {
+  font-size: 9px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.15em !important;
+  color: #333333 !important;
+  margin: 0 0 8px !important;
+  font-weight: 700 !important;
+}
+#fc-play-root .fc-oneline-log,
+#fc-play-root .fc-play-log-body {
+  font-size: 13px !important;
+  color: #888888 !important;
+  font-family: "JetBrains Mono", ui-monospace, monospace !important;
+}
+#fc-play-root .fc-play-log-active { color: #C8FF00 !important; }
+#fc-play-root .fc-mute { color: #555555 !important; }
+#fc-play-root .fc-reward-pos { color: #C8FF00 !important; font-weight: 700 !important; }
+#fc-play-root .fc-reward-neg { color: #FF4444 !important; font-weight: 700 !important; }
+#fc-play-root .fc-reward-neu { color: #666666 !important; font-weight: 600 !important; }
+#fc-play-root .fc-flow-line {
+  font-size: 13px !important;
+  color: #888888 !important;
+  font-family: "JetBrains Mono", ui-monospace, monospace !important;
+}
+#fc-play-root .fc-flow-line strong { color: #C8FF00 !important; }
+
+/* Episode trace */
+#fc-play-root .fc-trace-panel {
+  background: #0D0D0D !important;
+  border: 1px solid #1A1A1A !important;
+  border-radius: 4px !important;
+  padding: 14px 18px !important;
+  box-shadow: none !important;
+  font-family: "JetBrains Mono", ui-monospace, monospace !important;
+}
+#fc-play-root .fc-trace-title {
+  font-size: 9px !important;
+  letter-spacing: 0.15em !important;
+  color: #333333 !important;
+}
+#fc-play-root .fc-trace-line,
+#fc-play-root .fc-trace-reason,
+#fc-play-root .fc-trace-empty { color: #888888 !important; }
+#fc-play-root .fc-trace-pos { color: #C8FF00 !important; }
+#fc-play-root .fc-trace-neg { color: #FF4444 !important; }
+#fc-play-root .fc-trace-neu { color: #666666 !important; }
+#fc-play-root .fc-trace-final-lbl {
+  margin-bottom: 4px !important;
+  font-size: 9px !important;
+  color: #333333 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.12em !important;
+  font-weight: 700 !important;
+}
+
+#fc-play-root .fc-history-box { border-radius: 0 !important; }
+
+/* History entries inside accordion */
+#fc-play-root .fc-history-entries { padding: 8px 12px 12px !important; }
+#fc-play-root .fc-hist-card {
+  background: #0D0D0D !important;
+  border: 1px solid #1A1A1A !important;
+  border-radius: 4px !important;
+  border-left: 3px solid #C8FF00 !important;
+  box-shadow: none !important;
+  font-family: "JetBrains Mono", ui-monospace, monospace !important;
+  font-size: 13px !important;
+  color: #888888 !important;
+}
+#fc-play-root .fc-hist-card--final { border-left-color: #888888 !important; background: #161616 !important; }
+#fc-play-root .fc-hist-st {
+  font-size: 9px !important;
+  letter-spacing: 0.12em !important;
+  color: #444444 !important;
+}
+
+#fc-play-root .fc-play-flow-live { color: #C8FF00 !important; }
+#fc-play-root .fc-play-log-meta {
+  font-size: 12px !important;
+  margin: 8px 0 0 !important;
+  font-family: "JetBrains Mono", ui-monospace, monospace !important;
+}
+#fc-play-root .fc-play-log-detail {
+  font-size: 12px !important;
+  margin: 8px 0 0 !important;
+  font-family: "JetBrains Mono", ui-monospace, monospace !important;
+}
+#fc-play-root .fc-conf-outer {
+  max-width: 900px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+/* Episode history accordion (elem_id on wrapper or details) */
+#fc-play-root #fc-history-accordion details,
+#fc-play-root #fc-history-accordion.gr-accordion,
+#fc-play-root details.fc-play-history-acc {
+  background: #111111 !important;
+  border: 1px solid #1E1E1E !important;
+  border-radius: 4px !important;
+  margin-top: 12px !important;
+  box-shadow: none !important;
+}
+#fc-play-root #fc-history-accordion summary,
+#fc-play-root details.fc-play-history-acc > summary,
+#fc-play-root #fc-history-accordion details > summary {
+  list-style: none !important;
+  cursor: pointer !important;
+  font-size: 12px !important;
+  color: #555555 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.1em !important;
+  font-weight: 600 !important;
+  padding: 12px 14px !important;
+}
+#fc-play-root #fc-history-accordion summary::-webkit-details-marker,
+#fc-play-root details.fc-play-history-acc summary::-webkit-details-marker {
+  display: none !important;
+}
+#fc-play-root #fc-history-accordion summary::before,
+#fc-play-root details.fc-play-history-acc > summary::before {
+  content: "▸" !important;
+  display: inline-block !important;
+  margin-right: 8px !important;
+  color: #444444 !important;
+  font-size: 10px !important;
+  transition: transform 120ms ease !important;
+}
+#fc-play-root #fc-history-accordion[open] summary::before,
+#fc-play-root #fc-history-accordion details[open] > summary::before,
+#fc-play-root details.fc-play-history-acc[open] > summary::before {
+  transform: rotate(90deg) !important;
+}
+
+/* Accordion when elem_id is on outer div wrapper */
+#fc-play-root div#fc-history-accordion {
+  background: #111111 !important;
+  border: 1px solid #1E1E1E !important;
+  border-radius: 4px !important;
+  margin-top: 12px !important;
+  box-shadow: none !important;
+}
+
+#fc-play-root .fc-live-outer,
+#fc-play-root .fc-footer-wrap,
+#fc-play-root .fc-trace-outer {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+#fc-play-root .fc-play-live-outer {
+  max-width: 900px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+#fc-play-root button:active:not(:disabled),
+#fc-play-root .gr-button:active:not(:disabled) {
+  transform: none !important;
+}
+</style>
 """
 
 
@@ -768,7 +1315,6 @@ def _compare_panel_html() -> str:
       <div class="fc-compare-card fc-compare-card--random" role="group" aria-label="Random policy">
         <div class="fc-compare-h">
           <h3>Random Policy</h3>
-          <span class="fc-compare-icon" title="dice" aria-hidden="true">🎲</span>
         </div>
         <div class="fc-compare-metrics">
           <div class="fc-metric">
@@ -793,7 +1339,6 @@ def _compare_panel_html() -> str:
       <div class="fc-compare-card fc-compare-card--trained" role="group" aria-label="Trained policy">
         <div class="fc-compare-h">
           <h3>Trained Policy</h3>
-          <span class="fc-compare-icon" title="trained" aria-hidden="true">🧠<span style="font-size:0.85em">⚡</span></span>
         </div>
         <div class="fc-compare-metrics">
           <div class="fc-metric">
@@ -826,7 +1371,6 @@ ABOUT_PANEL_HTML = r"""
     <div class="fc-about-grid">
       <article class="fc-glass" role="region" aria-label="Goal">
         <div class="fc-glass-h">
-          <span class="fc-glass-ico" aria-hidden="true">🎯</span>
           <h3 class="fc-glass-t">Goal</h3>
         </div>
         <ul>
@@ -837,7 +1381,6 @@ ABOUT_PANEL_HTML = r"""
       </article>
       <article class="fc-glass" role="region" aria-label="Actions">
         <div class="fc-glass-h">
-          <span class="fc-glass-ico" aria-hidden="true">⚙️</span>
           <h3 class="fc-glass-t">Actions</h3>
         </div>
         <ul>
@@ -849,7 +1392,6 @@ ABOUT_PANEL_HTML = r"""
       </article>
       <article class="fc-glass" role="region" aria-label="Strategy">
         <div class="fc-glass-h">
-          <span class="fc-glass-ico" aria-hidden="true">🧠</span>
           <h3 class="fc-glass-t">Strategy</h3>
         </div>
         <ul>
@@ -931,7 +1473,7 @@ def _render_six_clues(
 ) -> str:
     if not revealed or len(revealed) < 6:
         revealed = [HIDDEN] * 6
-    out = ['<div class="fc-clue-arena"><div class="fc-clue-grid">']
+    out = ['<div class="fc-clue-arena fc-play-clue-arena"><div class="fc-clue-grid">']
     for i in range(6):
         raw = revealed[i]  # type: ignore[index]
         label, value, hidden = _clue_label_value(raw)
@@ -991,8 +1533,8 @@ def _token_bar_fill_class(pct: float) -> str:
 
 def _play_footer_html(o) -> str:
     lo, hi = o.low_remaining, o.high_remaining
-    cl = "#ff4d4d" if lo == 0 else "#00d4ff"
-    ch = "#ff4d4d" if hi == 0 else "#f5c542"
+    cl = "#FF4444" if lo == 0 else "#888888"
+    ch = "#FF4444" if hi == 0 else "#FF6666"
     if lo == 0 and hi == 0:
         hint = (
             "<p class='fc-hint-amber' style='margin:8px 0 0'>"
@@ -1129,19 +1671,20 @@ def _last_step_html(
     else:
         rc, cls = f"{r:.3f}", "fc-reward-neu"
     line = _oneline_last_action(o, last_action, outcome)
+    active = " fc-play-log-active" if last_action is not None else ""
     detail = (
         ""
         if last_action is None
-        else f"<p class='fc-mute' style='font-size:0.88rem;margin:8px 0 0'>{_html_escape(outcome)}</p>"
+        else f"<p class='fc-mute fc-play-log-detail'>{_html_escape(outcome)}</p>"
     )
     return (
-        f"<div class='fc-card-log'>"
+        f"<div class='fc-card-log fc-play-log'>"
         f"<h3>Last action</h3>"
-        f"<p class='fc-oneline-log'>{line}</p>"
-        f"<p style='margin:0 0 0;'><span class='fc-mute' style='color:#6b7c8a'>"
-        f"Step reward</span> <span class='{cls}' style='font-size:1.05em'>{rc}</span> · "
-        f"<span class='fc-mute' style='color:#6b7c8a'>Tokens</span> "
-        f"{o.tokens} / {MAX_TOKENS} · <span class='fc-mute' style='color:#6b7c8a'>Step</span> {o.step_number}</p>"
+        f"<p class='fc-oneline-log{active}'>{line}</p>"
+        f"<p class='fc-play-log-meta'><span class='fc-mute'>"
+        f"Step reward</span> <span class='{cls}'>{rc}</span> · "
+        f"<span class='fc-mute'>Tokens</span> "
+        f"{o.tokens} / {MAX_TOKENS} · <span class='fc-mute'>Step</span> {o.step_number}</p>"
         f"{detail}"
         f"</div>"
     )
@@ -1166,7 +1709,7 @@ def _flow_badge(
     if o.done:
         return "<p class='fc-flow-line'>Episode <strong>finished</strong></p>"
     return (
-        "<p class='fc-flow-line' style='color:#00d4ff'>"
+        "<p class='fc-flow-line fc-play-flow-live'>"
         "In progress — reveal, refresh, or commit when ready."
         "</p>"
     )
@@ -1290,10 +1833,17 @@ def _log_to_html(h: dict | None) -> str:
         if row.get("final"):
             c = float(row.get("cum", 0.0))
             sc = f"+{c:.2f}" if c > 0 else f"{c:.2f}"
+            hcls = (
+                "fc-reward-pos"
+                if c > 1e-6
+                else "fc-reward-neg"
+                if c < -1e-6
+                else "fc-reward-neu"
+            )
             parts.append(
                 f"<div class='fc-hist-card fc-hist-card--final'>"
                 f"<span class='fc-hist-st'>Episode total</span>"
-                f"Final cumulative reward: <strong class='fc-reward-pos'>{sc}</strong></div>"
+                f"Final cumulative reward: <strong class='{hcls}'>{sc}</strong></div>"
             )
             continue
         stn = int(row.get("step", 0))
@@ -1309,22 +1859,6 @@ def _log_to_html(h: dict | None) -> str:
         )
     parts.append("</div>")
     return "".join(parts)
-
-
-TRACE_ACTION_EMOJI: dict[str, str] = {
-    "Reveal Low": "🟦",
-    "Reveal High": "🟨",
-    "Commit": "✅",
-    "Refresh": "🔄",
-}
-
-
-def _trace_reason_line_icon(r: dict) -> str:
-    a = str(r.get("action", ""))
-    rw = float(r.get("reward", 0.0))
-    if a == "Commit":
-        return "✅" if rw > 1e-9 else "❌"
-    return TRACE_ACTION_EMOJI.get(a, "")
 
 
 def _append_episode_trace(
@@ -1352,11 +1886,6 @@ def _episode_trace_html(rows: list[dict] | list | None, episode_done: bool) -> s
         lines: list[str] = []
         for r in rows:
             rw = float(r["reward"])
-            act = str(r.get("action", "—"))
-            if act == "Commit":
-                emo = "✅" if rw > 1e-9 else "❌"
-            else:
-                emo = TRACE_ACTION_EMOJI.get(act, "•")
             if rw > 1e-9:
                 rs, ccls = f"+{rw:.2f}", "fc-trace-pos"
             elif rw < -1e-9:
@@ -1368,14 +1897,10 @@ def _episode_trace_html(rows: list[dict] | list | None, episode_done: bool) -> s
             sub = ""
             reas = str(r.get("reason", "")).strip()
             if reas:
-                ico = _trace_reason_line_icon(r)
-                ip = f"{ico} " if ico else ""
-                sub = (
-                    f'<div class="fc-trace-reason">↳ {ip}{_html_escape(reas)}</div>'
-                )
+                sub = f'<div class="fc-trace-reason">{_html_escape(reas)}</div>'
             lines.append(
                 f'<div class="fc-trace-step">'
-                f'<div class="fc-trace-line">Step {stn} → {emo} {an_esc} → <span class="{ccls}">{rs}</span></div>'
+                f'<div class="fc-trace-line">Step {stn} · {an_esc} → <span class="{ccls}">{rs}</span></div>'
                 f"{sub}</div>"
             )
         body = '<div class="fc-trace-lines">' + "".join(lines) + "</div>"
@@ -1390,7 +1915,7 @@ def _episode_trace_html(rows: list[dict] | list | None, episode_done: bool) -> s
             ts, tcls = f"{tot:.2f}", "fc-trace-neu"
         final = (
             f'<div class="fc-trace-final">'
-            f'<div style="margin-bottom:4px; font-size:0.7rem; color:#7c8a9c; text-transform:uppercase; letter-spacing:0.08em; font-weight:800;">Final result</div>'
+            f'<div class="fc-trace-final-lbl">Final result</div>'
             f"Total reward: <span class=\"{tcls}\">{ts}</span></div>"
         )
     return (
@@ -1421,19 +1946,21 @@ def _live_stats_html(stats: dict | None) -> str:
     used = max(0, MAX_TOKENS - cur)
     steps = int(s["step_count"])
     tot = float(s["total_reward"])
+    tok_cls = (
+        "fc-play-stat-val--tokens-warn" if cur <= 20 else "fc-play-stat-val--tokens-ok"
+    )
     if tot > 1e-9:
-        ccls, ts = "fc-live-val--pos", f"+{tot:.2f}"
+        rcls, ts = "fc-play-stat-val--rew-pos", f"+{tot:.2f}"
     elif tot < -1e-9:
-        ccls, ts = "fc-live-val--neg", f"{tot:.2f}"
+        rcls, ts = "fc-play-stat-val--rew-neg", f"{tot:.2f}"
     else:
-        ccls, ts = "fc-live-val--neu", f"{tot:.2f}"
-    return f"""<div class="fc-live-wrap">
-  <h3 class="fc-live-title">Live Stats</h3>
-  <div class="fc-live-grid">
-    <div class="fc-live-tile"><span class="fc-live-ico" aria-hidden="true">🪙</span><p class="fc-live-lbl">Tokens left</p><p class="fc-live-val">{cur}</p></div>
-    <div class="fc-live-tile"><span class="fc-live-ico" aria-hidden="true">🪙</span><p class="fc-live-lbl">Tokens used</p><p class="fc-live-val">{used}</p></div>
-    <div class="fc-live-tile"><span class="fc-live-ico" aria-hidden="true">🔢</span><p class="fc-live-lbl">Steps</p><p class="fc-live-val">{steps}</p></div>
-    <div class="fc-live-tile"><span class="fc-live-ico" aria-hidden="true">📈</span><p class="fc-live-lbl">Total reward</p><p class="fc-live-val {ccls}">{ts}</p></div>
+        rcls, ts = "fc-play-stat-val--rew-zero", f"{tot:.2f}"
+    return f"""<div class="fc-live-wrap fc-play-live-outer">
+  <div class="fc-play-live-strip">
+    <div class="fc-play-stat"><span class="fc-play-stat-lbl">Tokens left</span><p class="fc-play-stat-val {tok_cls}">{cur}</p></div>
+    <div class="fc-play-stat"><span class="fc-play-stat-lbl">Tokens used</span><p class="fc-play-stat-val">{used}</p></div>
+    <div class="fc-play-stat"><span class="fc-play-stat-lbl">Steps</span><p class="fc-play-stat-val">{steps}</p></div>
+    <div class="fc-play-stat"><span class="fc-play-stat-lbl">Total reward</span><p class="fc-play-stat-val {rcls}">{ts}</p></div>
   </div>
 </div>"""
 
@@ -1456,28 +1983,23 @@ def _confidence_html(level: str) -> str:
     tip = "Confidence is based on reward trend and actions taken"
     u = (level or "UNKNOWN").upper()
     if u == "UNKNOWN":
-        wcls, line = "fc-conf-wrap--unk", (
-            f'<p class="fc-conf-line fc-conf--unk" title="{_html_escape(tip)}">'
-            "Confidence: <span>Unknown</span></p>"
-        )
+        vcls = "fc-play-conf-val--unk"
+        text = "Unknown — need more data."
     elif u == "HIGH":
-        wcls, line = "fc-conf-wrap--hi", (
-            f'<p class="fc-conf-line fc-conf--hi" title="{_html_escape(tip)}">'
-            "🟢 <span>High Confidence</span></p>"
-        )
+        vcls = "fc-play-conf-val--hi"
+        text = "High — strong reward trajectory."
     elif u == "MEDIUM":
-        wcls, line = "fc-conf-wrap--med", (
-            f'<p class="fc-conf-line fc-conf--med" title="{_html_escape(tip)}">'
-            "🟡 <span>Medium Confidence</span></p>"
-        )
+        vcls = "fc-play-conf-val--med"
+        text = "Medium — mixed signals."
     else:
-        wcls, line = "fc-conf-wrap--lo", (
-            f'<p class="fc-conf-line fc-conf--lo" title="{_html_escape(tip)}">'
-            "🔴 <span>Low Confidence</span></p>"
-        )
+        vcls = "fc-play-conf-val--lo"
+        text = "Low — costly or negative trend."
+    et = _html_escape(tip)
     return (
-        f'<div class="fc-conf-card {wcls}" title="{_html_escape(tip)}">'
-        f'<h3 class="fc-conf-title">Confidence</h3>{line}</div>'
+        f'<div class="fc-play-conf" title="{et}">'
+        f'<p class="fc-play-conf-lbl">Confidence</p>'
+        f'<p class="fc-play-conf-val {vcls}" title="{et}">{_html_escape(text)}</p>'
+        f"</div>"
     )
 
 
@@ -1489,70 +2011,104 @@ def build_blocks() -> gr.Blocks:
     ) as demo:
         with gr.Tabs():
             with gr.Tab("Play"):
-                st = gr.State()  # type: ignore[var-annotated]  # { "env", "pre_obs" }
-                history_state = gr.State(HISTORY_STATE_INIT)  # type: ignore[var-annotated]
-                episode_trace = gr.State([])  # type: ignore[var-annotated]  # list[dict] step log
-                live_stats = gr.State(dict(LIVE_STATS_DEFAULT))  # type: ignore[var-annotated]
-                # Before first action per episode → UNKNOWN; after steps → HIGH|MEDIUM|LOW
-                confidence_level = gr.State("UNKNOWN")
+                with gr.Column(
+                    elem_id="fc-play-root",
+                    elem_classes=["fc-play-page"],
+                ):
+                    gr.HTML(PLAY_TAB_HEAD_INJECT, elem_id="fc-play-style-inject")
+                    st = gr.State()  # type: ignore[var-annotated]  # { "env", "pre_obs" }
+                    history_state = gr.State(HISTORY_STATE_INIT)  # type: ignore[var-annotated]
+                    episode_trace = gr.State([])  # type: ignore[var-annotated]  # list[dict] step log
+                    live_stats = gr.State(dict(LIVE_STATS_DEFAULT))  # type: ignore[var-annotated]
+                    # Before first action per episode → UNKNOWN; after steps → HIGH|MEDIUM|LOW
+                    confidence_level = gr.State("UNKNOWN")
 
-                gr.HTML(STATIC_HEADER, elem_classes=["fc-hgame"])
-
-                b_reset = gr.Button(
-                    "Start new episode",
-                    elem_classes=["fc-btn--start", "gr-button", "gr-button-primary"],
-                )
-
-                card_block = gr.HTML(_render_six_clues((HIDDEN,) * 6, None))
-                live_stats_display = gr.HTML(
-                    _live_stats_html(dict(LIVE_STATS_DEFAULT)), elem_classes=["fc-live-outer"]
-                )
-                confidence_display = gr.HTML(
-                    _confidence_html("UNKNOWN"), elem_classes=["fc-conf-outer"]
-                )
-
-                with gr.Row(elem_classes=["fc-actions-row"]):
-                    b_low = gr.Button(
-                        "Reveal Low",
-                        interactive=False,
-                        elem_classes=["gr-button", "fc-btn--low", "gr-button-primary"],
-                    )
-                    b_high = gr.Button(
-                        "Reveal High",
-                        interactive=False,
-                        elem_classes=["gr-button", "fc-btn--high", "gr-button-primary"],
-                    )
-                with gr.Row(elem_classes=["fc-actions-row"]):
-                    b_skip = gr.Button(
-                        "Refresh",
-                        interactive=False,
-                        elem_classes=["gr-button", "fc-btn--refresh", "gr-button-primary"],
-                    )
-                    b_commit = gr.Button(
-                        "Commit",
-                        interactive=False,
-                        elem_classes=["gr-button", "fc-btn--commit", "gr-button-primary"],
+                    gr.HTML(
+                        STATIC_HEADER,
+                        elem_id="fc-play-header",
+                        elem_classes=["fc-play-header-slot"],
                     )
 
-                footer_status = gr.HTML(
-                    COUNTER_FOOTER_IDLE, elem_classes=["fc-footer-wrap"]
-                )
-                last_block = gr.HTML(
-                    "<div class='fc-card-log'>"
-                    "<h3>Last action</h3><p class='fc-mute' style='margin:0'>"
-                    "No action yet. Start a new episode.</p></div>"
-                )
-                episode_trace_display = gr.HTML(
-                    _episode_trace_html([], False), elem_classes=["fc-trace-outer"]
-                )
-                flow = gr.HTML(
-                    "<p class='fc-flow-line' style='color:#6b7c8a; margin:0;'>"
-                    "Press <strong>Start new episode</strong> to begin.</p>"
-                )
-                with gr.Accordion("Episode history", open=False, elem_id="fc-history-accordion"):
-                    history_display = gr.HTML(
-                        _log_to_html(HISTORY_STATE_INIT), elem_classes=["fc-history-box"]
+                    b_reset = gr.Button(
+                        "Start new episode",
+                        elem_id="fc-play-btn-start",
+                        elem_classes=["fc-btn--start", "gr-button", "gr-button-primary"],
                     )
+
+                    card_block = gr.HTML(
+                        _render_six_clues((HIDDEN,) * 6, None),
+                        elem_id="fc-play-cards",
+                    )
+                    live_stats_display = gr.HTML(
+                        _live_stats_html(dict(LIVE_STATS_DEFAULT)),
+                        elem_id="fc-play-live-stats",
+                        elem_classes=["fc-live-outer"],
+                    )
+                    confidence_display = gr.HTML(
+                        _confidence_html("UNKNOWN"),
+                        elem_id="fc-play-confidence",
+                        elem_classes=["fc-conf-outer"],
+                    )
+
+                    with gr.Row(elem_classes=["fc-actions-row fc-play-actions-1"]):
+                        b_low = gr.Button(
+                            "Reveal Low",
+                            interactive=False,
+                            elem_id="fc-play-btn-low",
+                            elem_classes=["gr-button", "fc-btn--low", "gr-button-primary"],
+                        )
+                        b_high = gr.Button(
+                            "Reveal High",
+                            interactive=False,
+                            elem_id="fc-play-btn-high",
+                            elem_classes=["gr-button", "fc-btn--high", "gr-button-primary"],
+                        )
+                    with gr.Row(elem_classes=["fc-actions-row fc-play-actions-2"]):
+                        b_skip = gr.Button(
+                            "Refresh",
+                            interactive=False,
+                            elem_id="fc-play-btn-refresh",
+                            elem_classes=["gr-button", "fc-btn--refresh", "gr-button-primary"],
+                        )
+                        b_commit = gr.Button(
+                            "Commit",
+                            interactive=False,
+                            elem_id="fc-play-btn-commit",
+                            elem_classes=["gr-button", "fc-btn--commit", "gr-button-primary"],
+                        )
+
+                    footer_status = gr.HTML(
+                        COUNTER_FOOTER_IDLE,
+                        elem_id="fc-play-footer-tokens",
+                        elem_classes=["fc-footer-wrap"],
+                    )
+                    last_block = gr.HTML(
+                        "<div class='fc-card-log fc-play-log'>"
+                        "<h3>Last action</h3><p class='fc-mute' style='margin:0'>"
+                        "No action yet. Start a new episode.</p></div>",
+                        elem_id="fc-play-last-action",
+                    )
+                    episode_trace_display = gr.HTML(
+                        _episode_trace_html([], False),
+                        elem_id="fc-play-episode-trace",
+                        elem_classes=["fc-trace-outer"],
+                    )
+                    flow = gr.HTML(
+                        "<p class='fc-flow-line'>"
+                        "Press <strong>Start new episode</strong> to begin.</p>",
+                        elem_id="fc-play-flow",
+                    )
+                    with gr.Accordion(
+                        "Episode history",
+                        open=False,
+                        elem_id="fc-history-accordion",
+                        elem_classes=["fc-play-history-acc"],
+                    ):
+                        history_display = gr.HTML(
+                            _log_to_html(HISTORY_STATE_INIT),
+                            elem_id="fc-play-history-body",
+                            elem_classes=["fc-history-box"],
+                        )
                 _out_play = [
                     st,
                     history_state,
