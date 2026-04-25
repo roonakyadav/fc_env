@@ -431,6 +431,26 @@ button.gr-button.fc-btn--commit:hover:enabled, .gr-button.fc-btn--commit:hover:e
 .fc-live-val--neg { color: #ff4d4d !important; text-shadow: 0 0 16px #ff4d4d22; }
 .fc-live-val--neu { color: #cbd5e1 !important; }
 
+/* Confidence (below Live Stats) */
+.fc-conf-outer { max-width: 900px; margin: 0 auto 14px; }
+.fc-conf-card {
+  text-align: center; background: linear-gradient(180deg, #0e1520, #0a0d12); border: 1px solid #1e2a3a; border-radius: 14px;
+  padding: 16px 18px 18px; box-shadow: 0 0 0 1px rgba(0, 212, 255, 0.06) inset, 0 4px 24px -12px #0006;
+  transition: box-shadow 0.25s, border-color 0.2s;
+}
+.fc-conf-title { margin: 0 0 10px; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: #7c8b9c !important; }
+.fc-conf-line { margin: 0; font-size: 1.45rem; font-weight: 800; line-height: 1.25; letter-spacing: 0.02em; }
+.fc-conf-line span { text-shadow: 0 0 28px currentColor; }
+.fc-conf--hi { color: #4ade80 !important; --glow: #00ff88; }
+.fc-conf--med { color: #f5c542 !important; --glow: #f5c542; }
+.fc-conf--lo { color: #f87171 !important; --glow: #ff4d4d; }
+.fc-conf--unk { color: #8b9aab !important; font-size: 1.1rem; font-weight: 600; text-shadow: none; }
+.fc-conf--hi, .fc-conf--med, .fc-conf--lo { text-shadow: 0 0 20px var(--glow)44; }
+.fc-conf-wrap--hi { border-color: #14532d88; box-shadow: 0 0 0 1px #00ff8822 inset, 0 0 40px -20px #00ff8840; }
+.fc-conf-wrap--med { border-color: #ca8a0444; box-shadow: 0 0 0 1px #f5c5421a inset, 0 0 36px -20px #f5c54233; }
+.fc-conf-wrap--lo { border-color: #7f1d1d55; box-shadow: 0 0 0 1px #ff4d4d1a inset, 0 0 36px -20px #ff4d4d2a; }
+.fc-conf-wrap--unk { border-color: #1e2a3a; box-shadow: 0 4px 20px -12px #0006; }
+
 /* Episode trace (step-by-step, below Last action) */
 .fc-trace-outer { margin-top: 10px; }
 .fc-trace-panel {
@@ -1417,6 +1437,49 @@ def _live_stats_html(stats: dict | None) -> str:
 </div>"""
 
 
+def _compute_confidence_level(live: dict | None) -> str:
+    """Heuristic from running total reward and step count; frontend-only (no env change)."""
+    s = {**LIVE_STATS_DEFAULT, **(live or {})}
+    st = int(s.get("step_count", 0))
+    tr = float(s.get("total_reward", 0.0))
+    if st == 0:
+        return "UNKNOWN"
+    if tr > 0.8 and st >= 2:
+        return "HIGH"
+    if tr > 0:
+        return "MEDIUM"
+    return "LOW"
+
+
+def _confidence_html(level: str) -> str:
+    tip = "Confidence is based on reward trend and actions taken"
+    u = (level or "UNKNOWN").upper()
+    if u == "UNKNOWN":
+        wcls, line = "fc-conf-wrap--unk", (
+            f'<p class="fc-conf-line fc-conf--unk" title="{_html_escape(tip)}">'
+            "Confidence: <span>Unknown</span></p>"
+        )
+    elif u == "HIGH":
+        wcls, line = "fc-conf-wrap--hi", (
+            f'<p class="fc-conf-line fc-conf--hi" title="{_html_escape(tip)}">'
+            "🟢 <span>High Confidence</span></p>"
+        )
+    elif u == "MEDIUM":
+        wcls, line = "fc-conf-wrap--med", (
+            f'<p class="fc-conf-line fc-conf--med" title="{_html_escape(tip)}">'
+            "🟡 <span>Medium Confidence</span></p>"
+        )
+    else:
+        wcls, line = "fc-conf-wrap--lo", (
+            f'<p class="fc-conf-line fc-conf--lo" title="{_html_escape(tip)}">'
+            "🔴 <span>Low Confidence</span></p>"
+        )
+    return (
+        f'<div class="fc-conf-card {wcls}" title="{_html_escape(tip)}">'
+        f'<h3 class="fc-conf-title">Confidence</h3>{line}</div>'
+    )
+
+
 def build_blocks() -> gr.Blocks:
     with gr.Blocks(
         title="FC Decision Lab",
@@ -1429,6 +1492,8 @@ def build_blocks() -> gr.Blocks:
                 history_state = gr.State(HISTORY_STATE_INIT)  # type: ignore[var-annotated]
                 episode_trace = gr.State([])  # type: ignore[var-annotated]  # list[dict] step log
                 live_stats = gr.State(dict(LIVE_STATS_DEFAULT))  # type: ignore[var-annotated]
+                # Before first action per episode → UNKNOWN; after steps → HIGH|MEDIUM|LOW
+                confidence_level = gr.State("UNKNOWN")
 
                 gr.HTML(STATIC_HEADER, elem_classes=["fc-hgame"])
 
@@ -1440,6 +1505,9 @@ def build_blocks() -> gr.Blocks:
                 card_block = gr.HTML(_render_six_clues((HIDDEN,) * 6, None))
                 live_stats_display = gr.HTML(
                     _live_stats_html(dict(LIVE_STATS_DEFAULT)), elem_classes=["fc-live-outer"]
+                )
+                confidence_display = gr.HTML(
+                    _confidence_html("UNKNOWN"), elem_classes=["fc-conf-outer"]
                 )
 
                 with gr.Row(elem_classes=["fc-actions-row"]):
@@ -1490,8 +1558,10 @@ def build_blocks() -> gr.Blocks:
                     history_state,
                     episode_trace,
                     live_stats,
+                    confidence_level,
                     card_block,
                     live_stats_display,
+                    confidence_display,
                     last_block,
                     episode_trace_display,
                     flow,
@@ -1502,7 +1572,7 @@ def build_blocks() -> gr.Blocks:
                     b_skip,
                     b_commit,
                 ]
-                n_out = 16
+                n_out = 18
                 n_skip_updates = n_out - 1
 
                 def on_start() -> tuple:
@@ -1520,13 +1590,16 @@ def build_blocks() -> gr.Blocks:
                     bup = _button_state_from_obs(o)
                     tr_empty: list[dict] = []
                     ls0 = dict(LIVE_STATS_DEFAULT)
+                    c0 = _compute_confidence_level(ls0)
                     return (
                         s0,
                         h0,
                         tr_empty,
                         ls0,
+                        c0,
                         _render_six_clues(o.revealed_clues, None),
                         _live_stats_html(ls0),
+                        _confidence_html(c0),
                         _last_step_html(
                             o,
                             "Episode started — your move.",
@@ -1564,13 +1637,16 @@ def build_blocks() -> gr.Blocks:
                     h_html = _log_to_html(h_new)
                     new_tr = _append_episode_trace(ep_tr, o)
                     new_live = _update_live_stats(live, o)
+                    c_new = _compute_confidence_level(new_live)
                     return (
                         next_s,
                         h_new,
                         new_tr,
                         new_live,
+                        c_new,
                         _render_six_clues(o.revealed_clues, new_idx),
                         _live_stats_html(new_live),
+                        _confidence_html(c_new),
                         _last_step_html(
                             o,
                             _outcome_text(user_action, pre_dict, o, new_idx),
