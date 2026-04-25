@@ -572,6 +572,45 @@ summary { color: #e5e7eb; font-weight: 700; letter-spacing: 0.02em; }
 .fc-glass li { margin: 0; padding: 7px 0; padding-left: 0; color: #e2e8f0 !important; font-size: 0.95rem; line-height: 1.45; border-top: 1px solid #ffffff0a; }
 .fc-glass li:first-of-type { border-top: 0; padding-top: 0; }
 .fc-glass li::before { content: "· "; color: #f5c542; font-weight: 900; margin-right: 4px; }
+
+/* Training Insights tab: chart cards (dashboard, not raw plots) */
+.fc-insights-page { max-width: 920px; margin: 0 auto; padding: 8px 6px 24px; display: flex; flex-direction: column; gap: 28px; }
+.fc-insight-card {
+  background: linear-gradient(180deg, #0f172a 0%, #0b0f14 100%) !important;
+  border: 1px solid rgba(0, 212, 255, 0.18) !important;
+  border-radius: 18px !important;
+  padding: 20px 22px 24px !important;
+  box-shadow: 0 0 0 1px rgba(0, 255, 136, 0.05) inset, 0 0 48px -20px rgba(0, 212, 255, 0.18), 0 12px 40px -24px #000a;
+  transition: box-shadow 0.28s ease, border-color 0.25s, transform 0.22s ease;
+}
+.fc-insight-card:hover {
+  border-color: rgba(0, 255, 136, 0.32) !important;
+  box-shadow: 0 0 0 1px rgba(0, 255, 136, 0.1) inset, 0 0 56px -12px rgba(0, 212, 255, 0.35), 0 0 40px -16px rgba(0, 255, 136, 0.12), 0 16px 48px -20px #000b;
+  transform: translateY(-2px);
+}
+.fc-insight-head { margin: 0 0 16px; text-align: left; }
+.fc-insight-title {
+  margin: 0 0 6px; font-size: 1.2rem; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: #f8fafc !important;
+  text-shadow: 0 0 24px rgba(0, 212, 255, 0.2);
+  line-height: 1.25;
+}
+.fc-insight-subtitle { margin: 0 0 10px; font-size: 0.95rem; line-height: 1.5; color: #cbd5e1 !important; }
+.fc-insight-badge {
+  display: inline-block; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  color: #a5f3fc !important; background: rgba(0, 212, 255, 0.1); border: 1px solid rgba(0, 212, 255, 0.25);
+  border-radius: 8px; padding: 4px 10px; line-height: 1.2;
+  box-shadow: 0 0 16px -4px rgba(0, 212, 255, 0.25);
+}
+.fc-insight-miss, .fc-insight-miss-box, .fc-insight-miss-box p {
+  text-align: center; color: #8b9aad !important; font-size: 0.95rem; margin: 0; padding: 32px 16px;
+}
+/* Center plot; cap width; keep aspect */
+.fc-insight-card .gr-image, .fc-insight-card [class*="image"] { max-width: 720px; margin: 0 auto !important; }
+.fc-insight-card .image-container, .fc-insight-card .image-container > div { max-width: 100% !important; justify-content: center !important; }
+.fc-insight-card img, .fc-insight-card .image-container img {
+  max-width: min(100%, 720px) !important; width: 100% !important; height: auto !important;
+  display: block !important; margin: 0 auto !important; border-radius: 10px; box-shadow: 0 4px 24px -8px #0006;
+}
 """
 
 STATIC_HEADER = """
@@ -791,6 +830,35 @@ def _html_escape(s: str) -> str:
         .replace(">", "&gt;")
         .replace('"', "&quot;")
     )
+
+
+def _artifact_png_path(filename: str) -> Path:
+    return Path(__file__).resolve().parent / "artifacts" / filename
+
+
+def _insight_section_header_html(title: str, subtitle: str) -> str:
+    return (
+        '<div class="fc-insight-head">'
+        f'<h3 class="fc-insight-title">{_html_escape(title)}</h3>'
+        f'<p class="fc-insight-subtitle">{_html_escape(subtitle)}</p>'
+        '<span class="fc-insight-badge">Generated after training (offline evaluation)</span>'
+        "</div>"
+    )
+
+
+# (filename, section title, subtitle) for Training Insights tab
+TRAINING_INSIGHT_SECTIONS: list[tuple[str, str, str]] = [
+    (
+        "reward_curve.png",
+        "Learning Progress",
+        "Agent improves reward over time during training",
+    ),
+    (
+        "win_rate_vs_random.png",
+        "Before vs After Training",
+        "Trained agent significantly outperforms random baseline",
+    ),
+]
 
 
 def _render_six_clues(
@@ -1347,6 +1415,24 @@ def build_blocks() -> gr.Blocks:
                 gr.HTML(
                     _compare_panel_html(), elem_classes=["fc-tab-compare"]
                 )
+
+            with gr.Tab("Training Insights"):
+                with gr.Column(elem_classes=["fc-insights-page"]):
+                    for _img_name, _stitle, _ssub in TRAINING_INSIGHT_SECTIONS:
+                        _ap = _artifact_png_path(_img_name)
+                        with gr.Group(elem_classes=["fc-insight-card"]):
+                            gr.HTML(_insight_section_header_html(_stitle, _ssub))
+                            if _ap.is_file():
+                                gr.Image(
+                                    value=str(_ap),
+                                    show_label=False,
+                                    show_download_button=False,
+                                )
+                            else:
+                                gr.HTML(
+                                    '<p class="fc-insight-miss">Training graph not available</p>',
+                                    elem_classes=["fc-insight-miss-box"],
+                                )
 
             with gr.Tab("About"):
                 gr.HTML(ABOUT_PANEL_HTML, elem_classes=["fc-tab-about"])
