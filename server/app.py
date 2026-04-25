@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import gradio as gr
+from fastapi.responses import RedirectResponse
 
 from core.env_server import create_fastapi_app
 from environment import FCEnvEnvironment
@@ -13,22 +14,9 @@ app = create_fastapi_app(_env, title="FC OpenEnv", version="0.1.0")
 
 
 @app.get("/")
-def service_index() -> dict:
-    return {
-        "service": "fc-openenv",
-        "description": "Strategic clue-budgeting RL environment (OpenEnv-style API + UI).",
-        "endpoints": {
-            "api": {
-                "reset": "POST /reset",
-                "step": "POST /step  body: {action: 0-3}",
-                "state": "GET /state",
-                "health": "GET /health",
-                "docs": "GET /docs",
-            },
-            "mcp": {"tools_list": "GET /tools/list", "tools_call": "POST /tools/call"},
-            "ui": "GET /ui  (Gradio: actions, observations, state traces, plot artifacts)",
-        },
-    }
+def root() -> RedirectResponse:
+    """Hugging Face Space opens / by default; send users to the Gradio UI."""
+    return RedirectResponse(url="/ui", status_code=302)
 
 
 app = gr.mount_gradio_app(app, build_blocks(), path="/ui")
