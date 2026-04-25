@@ -251,6 +251,23 @@ p, .gradio-container p, li, span:not(.fc-reward-pos):not(.fc-reward-neg) {
 .fc-reward-pos { color: #00c853 !important; font-weight: 600; -webkit-text-fill-color: #00c853; }
 .fc-reward-neg { color: #ff5252 !important; font-weight: 600; -webkit-text-fill-color: #ff5252; }
 .fc-reward-neu { color: #cccccc !important; font-weight: 600; -webkit-text-fill-color: #cccccc; }
+
+/* Episode log (scrollable) */
+.history-box, .history-box .prose {
+  max-height: 300px !important;
+  overflow-y: auto !important;
+  padding: 10px 12px !important;
+  margin-top: 12px !important;
+  background-color: #111318 !important;
+  color: #e5e7eb !important;
+  border: 1px solid #2a2f3a !important;
+  border-radius: 10px !important;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  opacity: 1 !important;
+}
+.history-box .prose p, .history-box .prose li { color: #e5e7eb !important; }
+.history-box h2 { color: #ffffff !important; }
 """
 
 
@@ -433,6 +450,74 @@ COUNTER_INACTIVE = (
 )
 
 
+# Episode log (0–3 = env Action values; matches buttons in UI)
+_ACTION_NAMES: dict[int, str] = {
+    0: "Reveal low",
+    1: "Reveal high",
+    2: "Commit",
+    3: "Skip",
+}
+
+HISTORY_STATE_INIT: dict = {"lines": [], "cum": 0.0, "stale": True}
+
+
+def _action_name(action: int) -> str:
+    return _ACTION_NAMES.get(action, f"Action {action}")
+
+
+def _cumulative_assessment(cum: float) -> str:
+    if cum > 0.05:
+        return "Cumulative reward is **positive** on this run (sum of all step rewards)."
+    if cum < -0.05:
+        return "Cumulative reward is **negative** on this run (sum of all step rewards)."
+    return "Cumulative reward is about **neutral** (sum of all step rewards)."
+
+
+def _log_after_step(
+    h: dict | None,
+    user_action: int,
+    o,
+) -> dict:
+    prev: dict = {**HISTORY_STATE_INIT, **(h or {})}
+    lines: list[str] = list(prev.get("lines", []))
+    prior_cum = float(prev.get("cum", 0.0))
+    cum = prior_cum + float(o.reward)
+    an = _action_name(user_action)
+    step_entry = f"""**Step {o.step_number}**
+- **Action:** {an}
+- **Step reward:** {o.reward:+.4f}
+- **Tokens left:** {o.tokens}
+- **Low left:** {o.low_remaining}
+- **High left:** {o.high_remaining}
+- **Done (after this step):** {o.done}"""
+    lines.append(step_entry)
+    if o.done:
+        if user_action == 2:
+            end = "Commit (terminal action)"
+        elif user_action == 3:
+            end = "Skip (terminal action)"
+        else:
+            end = f"{an} or system limit (tokens, clues, max steps, or all revealed)"
+        final = f"""## Final result
+- **Total steps (env step number):** {o.step_number}
+- **Final tokens:** {o.tokens}
+- **Last step reward:** {o.reward:+.4f}
+- **Cumulative reward (episode sum):** {cum:+.4f}
+- **End driver:** {end}
+- **Outcome (cumulative return):** {_cumulative_assessment(cum)}"""
+        lines.append(final)
+    return {"lines": lines, "cum": cum, "stale": False}
+
+
+def _log_to_markdown(h: dict | None) -> str:
+    h = h or HISTORY_STATE_INIT
+    if h.get("stale", True) and not h.get("lines"):
+        return "### Episode history\n\n_No actions yet. Start a new episode to play._\n"
+    if not h.get("lines"):
+        return "### Episode history\n\n_New episode — steps will be logged as you act._\n"
+    return "### Episode history\n\n" + "\n\n---\n\n".join(h["lines"]) + "\n"
+
+
 def _counter_markdown_pair(o) -> tuple[str, str]:
     c_low = "#ff5252" if o.low_remaining == 0 else "#00c853"
     c_high = "#ff5252" if o.high_remaining == 0 else "#00c853"
@@ -462,8 +547,9 @@ def build_blocks() -> gr.Blocks:
         )
 
         with gr.Tabs():
-            with gr.Tab("▶️ Play"):
+            with gr.Tab("Play"):
                 st = gr.State()  # type: ignore[var-annotated]  # { "env", "pre_obs" }
+                history_state = gr.State(HISTORY_STATE_INIT)  # type: ignore[var-annotated]
 
                 flow = gr.HTML(
                     "<p class='fc-muted' style='margin:0'>Start a new episode to begin.</p>"
@@ -482,11 +568,11 @@ def build_blocks() -> gr.Blocks:
                     )
 
                 with gr.Row():
-                    b_low = gr.Button("🔍 Reveal Low-cost Clue", interactive=False)
-                    b_high = gr.Button("💎 Reveal High-cost Clue", interactive=False)
+                    b_low = gr.Button("Reveal low-cost clue", interactive=False)
+                    b_high = gr.Button("Reveal high-cost clue", interactive=False)
                 with gr.Row():
-                    b_skip = gr.Button("❌ Skip Candidate", interactive=False, variant="stop")
-                    b_commit = gr.Button("✅ Commit Decision", interactive=False)
+                    b_skip = gr.Button("Skip candidate", interactive=False, variant="stop")
+                    b_commit = gr.Button("Commit decision", interactive=False)
 
                 b_reset = gr.Button("Start new episode", variant="primary")
 
@@ -501,29 +587,39 @@ def build_blocks() -> gr.Blocks:
                     "No step yet</p></div>"
                 )
 
+                history_display = gr.Markdown(
+                    _log_to_markdown(HISTORY_STATE_INIT),
+                    elem_classes=["history-box"],
+                )
+
                 def on_start() -> tuple:
                     e = FCEnvEnvironment()
                     o = e.reset()
                     snap = _snapshot(o)
                     s0: dict = {"env": e, "pre_obs": snap}
+                    h0: dict = {"lines": [], "cum": 0.0, "stale": False}
+                    h_md = _log_to_markdown(h0)
                     lo, hi = _counter_markdown_pair(o)
                     bup = _button_state_from_obs(o)
                     return (
                         s0,
+                        h0,
                         _clue_cards_html(o.revealed_clues, None),
                         _token_bar_html(o),
                         _last_step_html(o, "Episode started — your move."),
                         _flow_badge(o, None),
                         lo,
                         hi,
+                        h_md,
                     ) + bup
 
                 def on_step(
                     s: dict | None,
                     user_action: int,
+                    hist: dict | None,
                 ) -> tuple:
                     if not s or s.get("env") is None:
-                        idle = (gr.update(),) * 10
+                        idle = (gr.update(),) * 12
                         return (s,) + idle
 
                     e: FCEnvEnvironment = s["env"]  # type: ignore[assignment]
@@ -540,8 +636,11 @@ def build_blocks() -> gr.Blocks:
                     next_s: dict = {"env": e, "pre_obs": out}
                     bup = _button_state_from_obs(o)
                     lo, hi = _counter_markdown_pair(o)
+                    h_new = _log_after_step(hist, user_action, o)
+                    h_md = _log_to_markdown(h_new)
                     return (
                         next_s,
+                        h_new,
                         _clue_cards_html(o.revealed_clues, new_idx),
                         _token_bar_html(o),
                         _last_step_html(
@@ -551,6 +650,7 @@ def build_blocks() -> gr.Blocks:
                         _flow_badge(o, user_action),
                         lo,
                         hi,
+                        h_md,
                     ) + bup
 
                 b_reset.click(
@@ -558,12 +658,14 @@ def build_blocks() -> gr.Blocks:
                     inputs=None,
                     outputs=[
                         st,
+                        history_state,
                         clues,
                         token_block,
                         last_block,
                         flow,
                         low_counter,
                         high_counter,
+                        history_display,
                         b_low,
                         b_high,
                         b_skip,
@@ -571,16 +673,18 @@ def build_blocks() -> gr.Blocks:
                     ],
                 )
                 b_low.click(
-                    lambda s: on_step(s, 0),
-                    inputs=[st],
+                    lambda s, h: on_step(s, 0, h),
+                    inputs=[st, history_state],
                     outputs=[
                         st,
+                        history_state,
                         clues,
                         token_block,
                         last_block,
                         flow,
                         low_counter,
                         high_counter,
+                        history_display,
                         b_low,
                         b_high,
                         b_skip,
@@ -588,16 +692,18 @@ def build_blocks() -> gr.Blocks:
                     ],
                 )
                 b_high.click(
-                    lambda s: on_step(s, 1),
-                    inputs=[st],
+                    lambda s, h: on_step(s, 1, h),
+                    inputs=[st, history_state],
                     outputs=[
                         st,
+                        history_state,
                         clues,
                         token_block,
                         last_block,
                         flow,
                         low_counter,
                         high_counter,
+                        history_display,
                         b_low,
                         b_high,
                         b_skip,
@@ -605,16 +711,18 @@ def build_blocks() -> gr.Blocks:
                     ],
                 )
                 b_commit.click(
-                    lambda s: on_step(s, 2),
-                    inputs=[st],
+                    lambda s, h: on_step(s, 2, h),
+                    inputs=[st, history_state],
                     outputs=[
                         st,
+                        history_state,
                         clues,
                         token_block,
                         last_block,
                         flow,
                         low_counter,
                         high_counter,
+                        history_display,
                         b_low,
                         b_high,
                         b_skip,
@@ -622,16 +730,18 @@ def build_blocks() -> gr.Blocks:
                     ],
                 )
                 b_skip.click(
-                    lambda s: on_step(s, 3),
-                    inputs=[st],
+                    lambda s, h: on_step(s, 3, h),
+                    inputs=[st, history_state],
                     outputs=[
                         st,
+                        history_state,
                         clues,
                         token_block,
                         last_block,
                         flow,
                         low_counter,
                         high_counter,
+                        history_display,
                         b_low,
                         b_high,
                         b_skip,
@@ -639,7 +749,7 @@ def build_blocks() -> gr.Blocks:
                     ],
                 )
 
-            with gr.Tab("📊 Compare"):
+            with gr.Tab("Compare"):
                 with gr.Group(elem_classes="content-card"):
                     gr.Markdown(
                         '<div class="section-title">Trained vs random</div>\n\n'
@@ -652,7 +762,7 @@ def build_blocks() -> gr.Blocks:
                         sanitize_html=False,
                     )
 
-            with gr.Tab("ℹ️ About"):
+            with gr.Tab("About"):
                 with gr.Group(elem_classes="content-card"):
                     gr.Markdown(
                         '<div class="section-title">About this lab</div>\n\n'
