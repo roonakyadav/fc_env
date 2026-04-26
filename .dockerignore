@@ -7,5 +7,4 @@ __pycache__
 .cursor
 terminals
 RULES*.md
-HF_RULES.md
 agent-transcripts

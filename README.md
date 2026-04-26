@@ -17,6 +17,8 @@ tags:
   - gradio
 ---
 
+> 🏆 **Live demo:** https://huggingface.co/spaces/roonakyadav/fc-env-final
+
 # FC OpenEnv — Due diligence under a probe budget (OpenEnv + HF Space)
 
 ## 🧠 Intuition (read this first)
@@ -35,6 +37,22 @@ Think **hiring** (or fraud review—it is the same shape):
 
 **This environment trains agents to make that three-way trade-off**—not to maximize a score in isolation, but to be **right *and* efficient** under a probe limit. The card metaphor is just a compact way to run the same loop: **probe → decide → commit or exit**.
 
+## 📊 Results at a glance
+
+| Metric | Random policy | Trained policy |
+|--------|--------------|----------------|
+| Win rate | 23.7% | 74.3% |
+| Avg reward | −0.445 | +1.155 |
+| Avg steps | 1.92 | 5.98 |
+
+> The agent learned to stop early. Fittingly, so did training — converging at ~300k steps with no further gains at 500k, confirming stable convergence.
+
+**+50.7 percentage points improvement in win rate.**
+
+The trained agent learned to probe strategically — spending fewer tokens on bad deals and committing confidently on good ones. Training converged at ~300k steps; extending to 500k produced no further gains, confirming stable early convergence rather than overfitting.
+
+Evaluation uses a fixed deterministic policy (`deterministic=True`) for reproducibility; episode-level variance is in `artifacts/training_metrics.csv`.
+
 ## 🎯 The point (in 5 seconds)
 
 The agent must learn:
@@ -48,20 +66,6 @@ The agent must learn:
 
 > This is not a “maximize reward” problem.  
 > This is a **“know when to stop thinking”** problem.
-
-## 📊 Results at a glance
-
-| Metric | Random policy | Trained policy |
-|--------|--------------|----------------|
-| Win rate | 23.7% | 74.3% |
-| Avg reward | −0.445 | +1.155 |
-| Avg steps | 1.92 | 5.98 |
-
-**+50.7 percentage points improvement in win rate.**
-
-The trained agent learned to probe strategically — spending fewer tokens on bad deals and committing confidently on good ones. Training converged at ~300k steps; extending to 1.2M produced no further gains, confirming stable early convergence rather than overfitting.
-
-Evaluation uses a fixed deterministic policy (`deterministic=True`) for reproducibility; episode-level variance is in `artifacts/training_metrics.csv`.
 
 ---
 
@@ -90,7 +94,7 @@ Do this in order so the story lands in under half a minute.
 1. Open your **Hugging Face Space** (see URL at the end of this file).
 2. Open the **UI** path on the same Space, usually **`/ui`** (for example, `https://roonakyadav-fc-env-final.hf.space/ui` once deployed).
 3. Open the **Compare** tab and read the **Trained vs Random** summary.
-4. Check **Training Depth Analysis** (`300k` vs `1.2M`) to confirm convergence behavior.
+4. Check **Training Depth Analysis** (`300k` vs `500k`) to confirm convergence behavior.
 5. Open **Training Insights** for the reward curve and win-rate chart—**visible learning vs baseline**.
 
 If you only have the API: `POST /reset` → a few `POST /step` with `{"action":0}`–`3` → see `reward` and `tokens` in JSON; then read `artifacts/evaluation.json` after a local `python train.py`.
@@ -184,7 +188,7 @@ For fair comparisons, keep randomness fixed (`SEED=42` in `train.py`) and write 
 
 ```bash
 FC_PPO_TIMESTEPS=300000  FC_EVAL_OUTPUT=artifacts/eval_300k.json  python train.py
-FC_PPO_TIMESTEPS=1200000 FC_EVAL_OUTPUT=artifacts/eval_1200k.json python train.py
+FC_PPO_TIMESTEPS=500000 FC_EVAL_OUTPUT=artifacts/eval_500k.json python train.py
 ```
 
 Compare these metrics between files:
@@ -197,7 +201,7 @@ Evaluation uses a fixed deterministic policy (deterministic=True); variance acro
 
 > UI note: token-usage evaluation is under calibration, so comparison decisions focus on the reliable metrics above.
 
-The model converged at approximately 300k steps — extending to 1.2M produced no further gains, indicating early and stable convergence rather than overfitting or evaluation error.
+The model converged at approximately 300k steps — extending to 500k produced no further gains, indicating early and stable convergence rather than overfitting or evaluation error.
 
 **TRL / Unsloth (LLM policies):** this task is discrete; for a **text policy**, call the Space with `client.FCEvOpenEnvClient` and use **returned reward only**—optional: `pip install -e ".[trl]"`.
 
@@ -210,7 +214,7 @@ The Gradio app is not an afterthought—it is the **judge-facing demo**.
 At **`/ui`** you get:
 
 - **Play tab:** structured decision interface with Game Board, Live Stats, Actions, Last Action, and Episode History.
-- **Compare tab:** **Trained vs Random** metrics plus **Training Depth Analysis** (`300k` vs `1.2M`), where the model converged at approximately 300k steps and extending to 1.2M produced no further gains.
+- **Compare tab:** **Trained vs Random** metrics plus **Training Depth Analysis** (`300k` vs `500k`), where the model converged at approximately 300k steps and extending to 500k produced no further gains.
 - **Training Insights tab:** embedded reward-curve and win-rate plots from `artifacts/`.
 
 **API (same process):** `GET /`, `GET /health`, `POST /reset`, `POST /step` with `{"action": 0-3 }`, `GET /state`, `GET /docs`; `GET /tools/list`, `POST /tools/call` (MCP-style surface).
@@ -308,6 +312,7 @@ models.py  environment.py  gym_env.py  train.py  app.py  client.py
 server/app.py  core/env_server.py  gradio_ui.py
 artifacts/  models/final_model.zip
 pyproject.toml  openenv.yaml  Dockerfile  requirements.txt  BLOG_POST.md
+RULES_REFERENCE.md  PROJECT_LOG.md
 ```
 
 ## 🧠 Final takeaway

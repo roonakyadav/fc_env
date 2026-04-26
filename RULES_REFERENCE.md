@@ -1,3 +1,9 @@
+# Rules Reference
+
+## Part 1 — HF Rules
+
+
+
 # OpenEnv Hackathon — Complete Rules & Strategy Guide
 
 ---
@@ -656,3 +662,510 @@ An environment that:
 1. **Runs** — fully functional, accessible via HF Spaces URL
 2. **Trains** — integrates with TRL or Unsloth RL loop
 3. **Proves improvement** — visible reward curves and before/after comparison
+
+## Part 2 — Space Architecture Rules
+
+# OpenEnv — HF Space Architecture & Deployment Rules
+
+---
+
+## Table of Contents
+
+1. [Core Concept — What Your HF Space Must Provide](#1-core-concept--what-your-hf-space-must-provide)
+2. [Important Architecture Rules](#2-important-architecture-rules)
+3. [Development Workflow](#3-development-workflow)
+4. [How Training Connects to Your Space](#4-how-training-connects-to-your-space)
+5. [Critical Insight — What Your Space Actually Is](#5-critical-insight--what-your-space-actually-is)
+6. [Local & Docker — Important Clarification](#6-local--docker--important-clarification)
+7. [CLI Deployment](#7-cli-deployment)
+8. [What Your Project Must Enable](#8-what-your-project-must-enable)
+9. [Final System Summary](#9-final-system-summary)
+
+---
+
+## 1. Core Concept — What Your HF Space Must Provide
+
+Every HF Space = **3 components**
+
+---
+
+### Component 1 — Server `(MANDATORY)`
+
+Provides a running environment endpoint, accessible via URL:
+
+```
+https://<username>-<space>.hf.space
+```
+
+**Required endpoints:**
+
+| Endpoint | Purpose |
+|----------|---------|
+| `/reset` | Start a new episode |
+| `/step` | Take an action |
+| `/state` | Return metadata |
+| `/health` | Must return healthy |
+| `/docs` | API docs (FastAPI auto-generated) |
+
+> **Rule: Your environment MUST be callable remotely.**
+
+---
+
+### Component 2 — Repository `(MANDATORY)`
+
+Must be installable as a package:
+
+```bash
+pip install git+https://huggingface.co/spaces/<user>/<space>
+```
+
+That means:
+- Proper Python package structure
+- Importable modules
+- Clean, explicit dependencies
+
+> **Rule: Your Space is not just a UI — it is a package.**
+
+---
+
+### Component 3 — Registry `(OPTIONAL / ADVANCED)`
+
+Docker image support:
+
+```bash
+docker pull registry.hf.space/<space>:latest
+```
+
+> **IMPORTANT:**
+> - This is **optional**
+> - You **do NOT need this** for the hackathon
+> - Only relevant for scaling / infra work
+
+---
+
+## 2. Important Architecture Rules
+
+### Rule 1 — Client-Server Separation
+
+| Side | Responsibility |
+|------|---------------|
+| **Client** | Calls the environment remotely |
+| **Server** | Runs the environment logic |
+
+> **Rule: No tight coupling. Clients must NOT import server internals.**
+
+---
+
+### Rule 2 — Standard API Contract `(NON-NEGOTIABLE)`
+
+Your environment **must** implement:
+
+```python
+reset()
+step(action)
+state()
+```
+
+> This is already enforced by OpenEnv — it must be followed exactly.
+
+---
+
+### Rule 3 — Async + Sync Support `(Recommended)`
+
+- **Async** — preferred
+- **Sync wrapper** — optional
+
+> Not mandatory, but considered good practice.
+
+---
+
+## 3. Development Workflow
+
+Judges expect your project to be locally runnable. Standard local dev flow:
+
+```bash
+git clone <space>
+cd <space>
+uv sync
+uv run server
+```
+
+Or alternatively:
+
+```bash
+uvicorn app:app
+```
+
+> **Rule: Must run locally without friction.**
+
+---
+
+## 4. How Training Connects to Your Space
+
+Typical training integration:
+
+```python
+client = EchoEnv(base_url="https://your-space.hf.space")
+client.reset()
+client.step(action)
+```
+
+> **CRITICAL RULE:**
+> Your training script must:
+> - Interact with a **live, running environment**
+> - **NOT** operate on a static dataset
+
+---
+
+## 5. Critical Insight — What Your Space Actually Is
+
+> **Most people miss this.**
+
+Your Space serves **three roles simultaneously**:
+
+| Role | Purpose |
+|------|---------|
+| **API** | RL training endpoint |
+| **Package** | Reusable, importable environment |
+| **Demo** | Judge-facing UI |
+
+> **If any one of these is weak → you lose points.**
+
+---
+
+## 6. Local & Docker — Important Clarification
+
+You may have seen references to Docker build, Docker run, and registry usage in the docs.
+
+**The reality for this hackathon:**
+
+| Feature | Required? |
+|---------|-----------|
+| `docker build` | ❌ NO |
+| Registry pull | ❌ NO |
+| CLI deployment | ❌ Optional |
+| Simple Space push | ✅ YES |
+
+> Docker and registry tooling are **not required** for submission. Do not spend time on them.
+
+---
+
+## 7. CLI Deployment
+
+An optional deployment path via the OpenEnv CLI:
+
+```bash
+openenv init my_env
+openenv push
+```
+
+> Not using this is **fine**. Simple HF Space push is sufficient.
+
+---
+
+## 8. What Your Project Must Enable
+
+### ✅ Must Have
+
+1. Running environment accessible via URL
+2. Proper Python package structure
+3. Training script that interacts with the live environment
+4. `reset()` / `step()` / `state()` fully implemented
+5. Space runs without errors
+
+### ⚠️ Should Have (High Value)
+
+- FastAPI endpoints fully working
+- `/health` endpoint returning healthy
+- Clean, working imports
+- Reproducible local setup
+
+### ❌ Ignore (For Now)
+
+- Docker registry
+- Advanced scaling
+- Infrastructure optimizations
+
+---
+
+## 9. Final System Summary
+
+Your entire system should behave as one connected pipeline:
+
+```
+HF Space
+  └── runs environment
+        └── exposes API
+              └── training script connects
+                    └── agent learns
+                          └── results shown in README / UI
+```
+
+## Part 3 — Setup & Deployment Rules
+
+# OpenEnv — Environment Setup, Deployment & Training Rules
+
+---
+
+## Table of Contents
+
+1. [Virtual Environment Setup](#1-virtual-environment-setup)
+2. [Project Initialization](#2-project-initialization)
+3. [Project Structure Requirements](#3-project-structure-requirements)
+4. [Deployment Flow](#4-deployment-flow)
+5. [What Successful Deployment Means](#5-what-successful-deployment-means)
+6. [HF Space Output Requirements](#6-hf-space-output-requirements)
+7. [Local & Remote Execution Modes](#7-local--remote-execution-modes)
+8. [Training Integration Rules](#8-training-integration-rules)
+9. [Critical Insight — Your Environment is a Reward Engine](#9-critical-insight--your-environment-is-a-reward-engine)
+10. [Training Execution Options](#10-training-execution-options)
+11. [Ecosystem Context](#11-ecosystem-context)
+12. [Final System Pipeline](#12-final-system-pipeline)
+13. [Status Checklist](#13-status-checklist)
+
+---
+
+## 1. Virtual Environment Setup
+
+**MANDATORY** — project must run in an isolated, reproducible environment.
+
+### Option A — Preferred
+
+```bash
+uv venv
+uv pip install openenv-core
+```
+
+### Option B
+
+```bash
+conda create -n openenv python=3.12
+conda activate openenv
+```
+
+> **Rule: Dependencies must be reproducible across machines.**
+
+---
+
+## 2. Project Initialization
+
+```bash
+openenv init my_env
+```
+
+This generates the following scaffold:
+
+| File / Folder | Purpose |
+|---------------|---------|
+| `models.py` | Typed dataclasses |
+| `environment.py` | Core environment logic |
+| `server/` | FastAPI server |
+| `pyproject.toml` | Packaging config |
+| `Dockerfile` | Container definition |
+
+> **Rule: Your project structure must follow the OpenEnv template exactly.**
+
+---
+
+## 3. Project Structure Requirements
+
+**Required files:**
+
+```
+server/
+models.py         → Action, Observation, State dataclasses
+environment.py    → core environment logic
+client.py         → client interface
+server/app.py     → FastAPI entry point
+pyproject.toml    → packaging
+openenv.yaml      → config
+README.md
+```
+
+> **Rules:**
+> - Clean modular separation — **NOT everything in one file**
+> - Must be **pip-installable** with clean import paths
+
+---
+
+## 4. Deployment Flow
+
+```bash
+openenv push
+```
+
+This performs the following steps automatically:
+
+1. Validates environment
+2. Prepares files
+3. Uploads to HF Space
+4. Builds automatically
+5. Deploys
+
+> **Rules:**
+> - Your project **must pass validation**
+> - Must deploy **without manual hacks or workarounds**
+
+---
+
+## 5. What Successful Deployment Means
+
+After a successful push, all of the following must be true:
+
+- [ ] Space URL is live
+- [ ] API is working
+- [ ] UI is visible
+- [ ] Logs are clean — no crashes
+
+> **Rule: "Runs locally" is NOT enough. Must run on HF infrastructure.**
+
+---
+
+## 6. HF Space Output Requirements
+
+Your Space must display:
+
+- Action input
+- Observation output
+- State tracking
+- Logs
+
+> **Rule: Must be interactive — even a basic interaction loop is required.**
+
+---
+
+## 7. Local & Remote Execution Modes
+
+**Mode 1 — Run locally via server:**
+
+```bash
+uv run server
+```
+
+**Mode 2 — Run via Docker (optional):**
+
+```bash
+docker run -p 8000:8000 <image>
+```
+
+**Mode 3 — Clone Space directly:**
+
+```bash
+git clone <hf-space>
+```
+
+> **Rule: Environment must be reproducible outside of HF infrastructure.**
+
+---
+
+## 8. Training Integration Rules
+
+### TRL (GRPO)
+
+Core pattern:
+
+```python
+env.step(completion)
+reward = result.reward
+```
+
+> **Rule: Reward must come FROM the environment — not manually computed inside the training script.**
+
+---
+
+### Unsloth Integration
+
+Pattern:
+1. Load model
+2. Apply LoRA
+3. Use environment as the reward function
+
+> **Rule: The environment acts as the evaluation function — not the training script.**
+
+---
+
+## 9. Critical Insight — Your Environment is a Reward Engine
+
+> **This wins or loses you the hackathon.**
+
+Your environment is **not** just a simulation. It is **not** just an API.
+
+It is a **reward engine**:
+
+```
+Model        → generates output
+Environment  → scores it
+Training     → optimizes on that score
+```
+
+The environment is the source of truth for what "good" means. If the reward is weak or externally computed, your RL loop is not real.
+
+---
+
+## 10. Training Execution Options
+
+| Option | Cost | Speed | Notes |
+|--------|------|-------|-------|
+| **Local** (CPU / laptop) | ✅ Free | Slower | Fine for hackathon |
+| **HF Jobs** (T4, A100, etc.) | ⚠️ Paid | Faster | Pay-as-you-go |
+
+> **Rule: Stick to local training unless you have a specific reason to use HF Jobs.**
+
+**GPU selection (only if using HF Jobs):**
+- Small models → T4 is sufficient
+- Do not over-allocate compute
+
+```bash
+hf jobs hardware   # shows available compute options
+```
+
+---
+
+## 11. Ecosystem Context
+
+Your environment should feel like a legitimate peer to existing environments, not a random script.
+
+Examples of existing environments in the ecosystem:
+
+- BrowserGym
+- Chess
+- CodeEnv
+- Connect4
+- Trading
+- *(and others)*
+
+> **Rule: Your environment should be structured and presented like one of these — a real, named, reusable environment.**
+
+---
+
+## 12. Final System Pipeline
+
+Your full pipeline must connect end-to-end:
+
+```
+Environment (HF Space)
+        ↓
+  Exposes API
+        ↓
+Training script connects
+        ↓
+Model generates actions
+        ↓
+Environment returns reward
+        ↓
+Training updates model
+```
+
+Every link in this chain must work. A break at any point means your RL loop is incomplete.
+
+---
+
+## 13. Status Checklist
+
+You are close to complete. Confirm the following before submission:
+
+| Item | Status |
+|------|--------|
+| Training uses environment rewards (not manual) | ✅ Confirm |
+| Space runs on HF infra without errors | ✅ Confirm |
+| README clearly explains the full pipeline | ✅ Confirm |

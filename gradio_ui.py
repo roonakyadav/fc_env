@@ -1206,7 +1206,7 @@ def _compare_panel_html() -> str:
     depth_1200 = {}
     base = Path(__file__).resolve().parent / "artifacts"
     p300 = base / "eval_300k.json"
-    p1200 = base / "eval_1200k.json"
+    p1200 = base / "eval_500k.json"
     try:
         with p300.open(encoding="utf-8") as f:
             raw300 = json.load(f)
@@ -1230,7 +1230,7 @@ def _compare_panel_html() -> str:
     r1200 = _fmetric_reward(depth_1200.get("avg_reward"))
 
     conv = (
-        "Model converged early at ~300k steps. No further gains at 1.2M — "
+        "Model converged early at ~300k steps. No further gains at 500k — "
         "this is stable convergence, not evaluation error. Deterministic "
         "evaluation policy used for reproducibility."
     )
@@ -1296,7 +1296,7 @@ def _compare_panel_html() -> str:
         <p class="fc-depth-line">📈 <strong>Avg Reward:</strong> <span class="fc-pos">{r300}</span></p>
       </div>
       <div class="fc-depth-card">
-        <p class="fc-depth-step">1.2M steps</p>
+        <p class="fc-depth-step">500k steps</p>
         <p class="fc-depth-line">🎯 <strong>Win Rate:</strong> <strong>{w1200}</strong></p>
         <p class="fc-depth-line">📈 <strong>Avg Reward:</strong> <span class="fc-pos">{r1200}</span></p>
       </div>
