@@ -75,9 +75,9 @@ Do this in order so the story lands in under half a minute.
 
 1. Open your **Hugging Face Space** (see URL at the end of this file).
 2. Open the **UI** path on the same Space, usually **`/ui`** (for example, `https://YOUR_USERNAME-YOUR_SPACENAME.hf.space/ui` once deployed).
-3. Click **Run Comparison**. Read the **summary** (random vs trained metrics).
-4. Scroll: **Trained** trace vs **Random** trace—same rules, different decisions (tokens, stop/skip, reward).
-5. Open the two **images**: reward curve and win-rate bar chart—**visible learning vs baseline**.
+3. Open the **Compare** tab and read the **Trained vs Random** summary.
+4. Check **Training Depth Analysis** (`300k` vs `1.2M`) to confirm convergence behavior.
+5. Open **Training Insights** for the reward curve and win-rate chart—**visible learning vs baseline**.
 
 If you only have the API: `POST /reset` → a few `POST /step` with `{"action":0}`–`3` → see `reward` and `tokens` in JSON; then read `artifacts/evaluation.json` after a local `python train.py`.
 
@@ -160,7 +160,24 @@ All training uses **only** `observation.reward` from `step()`.
 ## Training and proof artifacts
 
 1. **Q-learning** vs a **random** baseline: `artifacts/evaluation.json`, `artifacts/training_metrics.csv`, `artifacts/reward_curve.png`, `artifacts/win_rate_vs_random.png`, `artifacts/q_table.json`.
-2. **PPO (Stable-Baselines3)** on the Gym wrapper → `models/final_model.zip` (control length with `FC_PPO_TIMESTEPS`, default `14000`).
+2. **PPO (Stable-Baselines3)** on the Gym wrapper → `models/final_model.zip` (control length with `FC_PPO_TIMESTEPS`, default `800000`).
+
+### Reproducible depth comparison (fixed seed)
+
+For fair comparisons, keep randomness fixed (`SEED=42` in `train.py`) and write each run to a separate eval file:
+
+```bash
+FC_PPO_TIMESTEPS=300000  FC_EVAL_OUTPUT=artifacts/eval_300k.json  python train.py
+FC_PPO_TIMESTEPS=1200000 FC_EVAL_OUTPUT=artifacts/eval_1200k.json python train.py
+```
+
+Compare these metrics between files:
+
+- `win_rate` (primary)
+- `avg_reward` (stability)
+- `avg_steps` (behavior)
+
+> UI note: token-usage evaluation is under calibration, so comparison decisions focus on the reliable metrics above.
 
 **TRL / Unsloth (LLM policies):** this task is discrete; for a **text policy**, call the Space with `client.FCEvOpenEnvClient` and use **returned reward only**—optional: `pip install -e ".[trl]"`.
 
@@ -172,9 +189,9 @@ The Gradio app is not an afterthought—it is the **judge-facing demo**.
 
 At **`/ui`** you get:
 
-- **Run Comparison** and **Retrain + Run Comparison** to refresh metrics.
-- **Side-by-side episode traces** (step, action, reward, tokens, done) for **trained** vs **random**—visible **state transition** without reading code.
-- Embedded **reward curve** and **win-rate** plots from `artifacts/`.
+- **Play tab:** structured decision interface with Game Board, Live Stats, Confidence, Actions, Last Action, and Episode History.
+- **Compare tab:** **Trained vs Random** metrics plus **Training Depth Analysis** (`300k` vs `1.2M`) and convergence interpretation.
+- **Training Insights tab:** embedded reward-curve and win-rate plots from `artifacts/`.
 
 **API (same process):** `GET /`, `GET /health`, `POST /reset`, `POST /step` with `{"action": 0-3 }`, `GET /state`, `GET /docs`; `GET /tools/list`, `POST /tools/call` (MCP-style surface).
 

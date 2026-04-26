@@ -846,10 +846,9 @@ PLAY_TAB_HEAD_INJECT = r"""
   align-items: stretch !important;
   width: 100% !important;
   max-width: 900px !important;
-  margin: 20px auto !important;
-  border-top: 1px solid #1E1E1E !important;
-  border-bottom: 1px solid #1E1E1E !important;
-  gap: 0 !important;
+  margin: 0 auto !important;
+  border: none !important;
+  gap: 16px !important;
   padding: 0 !important;
   background: transparent !important;
 }
@@ -861,12 +860,38 @@ PLAY_TAB_HEAD_INJECT = r"""
   background: transparent !important;
   border: none !important;
 }
-.play-tab .stats-row > div:not(:last-child) .stat-block { border-right: 1px solid #1E1E1E !important; }
 .play-tab .stat-block {
   padding: 16px 0 !important;
   text-align: center !important;
   margin: 0 !important;
-  background: transparent !important;
+  background: #0d1118 !important;
+  border: 1px solid #1e2a3a !important;
+  border-radius: 10px !important;
+}
+.play-tab .card {
+  background: rgba(255,255,255,0.02) !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+  border-radius: 12px !important;
+  padding: 16px !important;
+  margin-bottom: 18px !important;
+  box-shadow: none !important;
+}
+.play-tab .card:hover {
+  border-color: rgba(0, 255, 200, 0.3) !important;
+}
+.play-tab .section-title {
+  font-size: 14px !important;
+  color: #9aa4b2 !important;
+  margin: 0 0 8px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1px !important;
+  border: none !important;
+  padding: 0 !important;
+}
+.play-tab .fc-history-scroll {
+  max-height: 250px !important;
+  overflow-y: auto !important;
+  padding-right: 4px !important;
 }
 .play-tab .stat-label {
   font-size: 9px !important;
@@ -1457,7 +1482,7 @@ COUNTER_FOOTER_IDLE = (
     "Low: <span class='fc-mute' style='font-weight:600;'>—</span> &nbsp;·&nbsp; "
     "High: <span class='fc-mute' style='font-weight:600;'>—</span></div>"
     "<p class='fc-mute' style='margin:0 0 8px;font-size:0.86rem;'>"
-    "Start a new episode to play.</p>"
+    "Awaiting episode start.</p>"
     "<div class='fc-token-outer'>"
     "<p class='fc-token-label' style='color:#6b7280'>"
     f"Tokens: 0 / {MAX_TOKENS}</p><div class='fc-token-track'>"
@@ -1621,7 +1646,6 @@ def _last_step_html(
     )
     return (
         f"<div class='fc-card-log fc-play-log log-panel'>"
-        f"<h3 class='log-label'>Last action</h3>"
         f"<p class='fc-oneline-log log-content{active}'>{line}</p>"
         f"<p class='fc-play-log-meta log-content'><span class='fc-mute'>"
         f"Step reward</span> <span class='{cls}'>{rc}</span> · "
@@ -1862,8 +1886,7 @@ def _episode_trace_html(rows: list[dict] | list | None, episode_done: bool) -> s
         )
     return (
         '<div class="fc-trace-panel">'
-        '<h3 class="fc-trace-title">Episode History</h3>'
-        f"{body}{final}"
+        f'<div class="fc-history-scroll">{body}{final}</div>'
         "</div>"
     )
 
@@ -1987,7 +2010,6 @@ def build_blocks() -> gr.Blocks:
                 ):
                     gr.HTML(PLAY_TAB_HEAD_INJECT, elem_id="fc-play-style-inject")
                     st = gr.State()  # type: ignore[var-annotated]  # { "env", "pre_obs" }
-                    history_state = gr.State(HISTORY_STATE_INIT)  # type: ignore[var-annotated]
                     episode_trace = gr.State([])  # type: ignore[var-annotated]  # list[dict] step log
                     live_stats = gr.State(dict(LIVE_STATS_DEFAULT))  # type: ignore[var-annotated]
                     # Before first action per episode → UNKNOWN; after steps → HIGH|MEDIUM|LOW
@@ -1999,128 +2021,129 @@ def build_blocks() -> gr.Blocks:
                         elem_classes=["fc-play-header-slot", "play-header"],
                     )
 
-                    b_reset = gr.Button(
-                        "Start new episode",
-                        elem_id="fc-play-btn-start",
-                        elem_classes=[
-                            "start-btn",
-                            "fc-btn--start",
-                            "gr-button",
-                            "gr-button-primary",
-                        ],
-                    )
+                    with gr.Group(elem_classes=["card"]):
+                        gr.HTML("<div class='section-title'>Game Board</div>")
+                        b_reset = gr.Button(
+                            "Start new episode",
+                            elem_id="fc-play-btn-start",
+                            elem_classes=[
+                                "start-btn",
+                                "fc-btn--start",
+                                "gr-button",
+                                "gr-button-primary",
+                            ],
+                        )
+                        card_block = gr.HTML(
+                            _render_six_clues((HIDDEN,) * 6, None),
+                            elem_id="fc-play-cards",
+                        )
+                        footer_status = gr.HTML(
+                            COUNTER_FOOTER_IDLE,
+                            elem_id="fc-play-footer-tokens",
+                            elem_classes=["fc-footer-wrap"],
+                        )
 
-                    card_block = gr.HTML(
-                        _render_six_clues((HIDDEN,) * 6, None),
-                        elem_id="fc-play-cards",
-                    )
                     ls0 = dict(LIVE_STATS_DEFAULT)
-                    with gr.Row(elem_classes=["stats-row"]):
-                        stat_html_tok_left = gr.HTML(
-                            _stat_html_tokens_left(ls0),
-                            elem_id="fc-play-stat-tokens-left",
-                            elem_classes=["stat-block"],
-                        )
-                        stat_html_steps = gr.HTML(
-                            _stat_html_steps(ls0),
-                            elem_id="fc-play-stat-steps",
-                            elem_classes=["stat-block"],
-                        )
-                        stat_html_reward = gr.HTML(
-                            _stat_html_reward(ls0),
-                            elem_id="fc-play-stat-reward",
-                            elem_classes=["stat-block"],
-                        )
-                    confidence_display = gr.HTML(
-                        _confidence_html("UNKNOWN"),
-                        elem_id="fc-play-confidence",
-                        elem_classes=["fc-conf-outer"],
-                    )
+                    with gr.Group(elem_classes=["card"]):
+                        gr.HTML("<div class='section-title'>Live Stats</div>")
+                        with gr.Row(elem_classes=["stats-row"]):
+                            stat_html_tok_left = gr.HTML(
+                                _stat_html_tokens_left(ls0),
+                                elem_id="fc-play-stat-tokens-left",
+                                elem_classes=["stat-block"],
+                            )
+                            stat_html_steps = gr.HTML(
+                                _stat_html_steps(ls0),
+                                elem_id="fc-play-stat-steps",
+                                elem_classes=["stat-block"],
+                            )
+                            stat_html_reward = gr.HTML(
+                                _stat_html_reward(ls0),
+                                elem_id="fc-play-stat-reward",
+                                elem_classes=["stat-block"],
+                            )
 
-                    with gr.Row(elem_classes=["btn-grid"]):
-                        b_low = gr.Button(
-                            "REVEAL LOW",
-                            interactive=False,
-                            elem_id="fc-play-btn-low",
-                            elem_classes=[
-                                "btn-low",
-                                "gr-button",
-                                "fc-btn--low",
-                                "gr-button-primary",
-                            ],
-                        )
-                        b_high = gr.Button(
-                            "REVEAL HIGH",
-                            interactive=False,
-                            elem_id="fc-play-btn-high",
-                            elem_classes=[
-                                "btn-high",
-                                "gr-button",
-                                "fc-btn--high",
-                                "gr-button-primary",
-                            ],
-                        )
-                    with gr.Row(elem_classes=["btn-grid"]):
-                        b_skip = gr.Button(
-                            "REFRESH",
-                            interactive=False,
-                            elem_id="fc-play-btn-refresh",
-                            elem_classes=[
-                                "btn-ghost",
-                                "gr-button",
-                                "fc-btn--refresh",
-                                "gr-button-primary",
-                            ],
-                        )
-                        b_commit = gr.Button(
-                            "COMMIT",
-                            interactive=False,
-                            elem_id="fc-play-btn-commit",
-                            elem_classes=[
-                                "btn-commit",
-                                "gr-button",
-                                "fc-btn--commit",
-                                "gr-button-primary",
-                            ],
+                    with gr.Group(elem_classes=["card"]):
+                        gr.HTML("<div class='section-title'>Confidence</div>")
+                        confidence_display = gr.HTML(
+                            _confidence_html("UNKNOWN"),
+                            elem_id="fc-play-confidence",
+                            elem_classes=["fc-conf-outer"],
                         )
 
-                    footer_status = gr.HTML(
-                        COUNTER_FOOTER_IDLE,
-                        elem_id="fc-play-footer-tokens",
-                        elem_classes=["fc-footer-wrap"],
-                    )
-                    last_block = gr.HTML(
-                        "<div class='fc-card-log fc-play-log log-panel'>"
-                        "<h3 class=\"log-label\">Last action</h3><p class='fc-mute log-content' style='margin:0'>"
-                        "No action yet. Start a new episode.</p></div>",
-                        elem_id="fc-play-last-action",
-                        elem_classes=["log-panel"],
-                    )
-                    episode_trace_display = gr.HTML(
-                        _episode_trace_html([], False),
-                        elem_id="fc-play-episode-trace",
-                        elem_classes=["fc-trace-outer", "log-panel"],
-                    )
+                    with gr.Group(elem_classes=["card"]):
+                        gr.HTML("<div class='section-title'>Actions</div>")
+                        with gr.Row(elem_classes=["btn-grid"]):
+                            b_low = gr.Button(
+                                "REVEAL LOW",
+                                interactive=False,
+                                elem_id="fc-play-btn-low",
+                                elem_classes=[
+                                    "btn-low",
+                                    "gr-button",
+                                    "fc-btn--low",
+                                    "gr-button-primary",
+                                ],
+                            )
+                            b_high = gr.Button(
+                                "REVEAL HIGH",
+                                interactive=False,
+                                elem_id="fc-play-btn-high",
+                                elem_classes=[
+                                    "btn-high",
+                                    "gr-button",
+                                    "fc-btn--high",
+                                    "gr-button-primary",
+                                ],
+                            )
+                        with gr.Row(elem_classes=["btn-grid"]):
+                            b_skip = gr.Button(
+                                "REFRESH",
+                                interactive=False,
+                                elem_id="fc-play-btn-refresh",
+                                elem_classes=[
+                                    "btn-ghost",
+                                    "gr-button",
+                                    "fc-btn--refresh",
+                                    "gr-button-primary",
+                                ],
+                            )
+                            b_commit = gr.Button(
+                                "COMMIT",
+                                interactive=False,
+                                elem_id="fc-play-btn-commit",
+                                elem_classes=[
+                                    "btn-commit",
+                                    "gr-button",
+                                    "fc-btn--commit",
+                                    "gr-button-primary",
+                                ],
+                            )
+
+                    with gr.Group(elem_classes=["card"]):
+                        gr.HTML("<div class='section-title'>Last Action</div>")
+                        last_block = gr.HTML(
+                            "<div class='fc-card-log fc-play-log log-panel'>"
+                            "<p class='fc-mute log-content' style='margin:0'>No action yet.</p></div>",
+                            elem_id="fc-play-last-action",
+                            elem_classes=["log-panel"],
+                        )
+
+                    with gr.Group(elem_classes=["card"]):
+                        gr.HTML("<div class='section-title'>Episode History</div>")
+                        episode_trace_display = gr.HTML(
+                            _episode_trace_html([], False),
+                            elem_id="fc-play-episode-trace",
+                            elem_classes=["fc-trace-outer", "log-panel"],
+                        )
                     flow = gr.HTML(
                         "<p class='fc-flow-line status-hint'>"
                         "Press <strong>Start new episode</strong> to begin.</p>",
                         elem_id="fc-play-flow",
                         elem_classes=["status-hint"],
                     )
-                    with gr.Accordion(
-                        "Episode history",
-                        open=False,
-                        elem_id="fc-history-accordion",
-                        elem_classes=["fc-play-history-acc", "episode-accordion"],
-                    ):
-                        history_display = gr.HTML(
-                            _log_to_html(HISTORY_STATE_INIT),
-                            elem_id="fc-play-history-body",
-                            elem_classes=["fc-history-box", "log-panel"],
-                        )
                 _out_play = [
                     st,
-                    history_state,
                     episode_trace,
                     live_stats,
                     confidence_level,
@@ -2133,13 +2156,12 @@ def build_blocks() -> gr.Blocks:
                     episode_trace_display,
                     flow,
                     footer_status,
-                    history_display,
                     b_low,
                     b_high,
                     b_skip,
                     b_commit,
                 ]
-                n_out = 19
+                n_out = 17
                 n_skip_updates = n_out - 1
 
                 def on_start() -> tuple:
@@ -2147,20 +2169,12 @@ def build_blocks() -> gr.Blocks:
                     o = e.reset()
                     snap = _snapshot(o)
                     s0: dict = {"env": e, "pre_obs": snap}
-                    h0: dict = {
-                        "lines": [],
-                        "cum": 0.0,
-                        "stale": False,
-                        "card_rows": [],
-                    }
-                    h_html = _log_to_html(h0)
                     bup = _button_state_from_obs(o)
                     tr_empty: list[dict] = []
                     ls0 = dict(LIVE_STATS_DEFAULT)
                     c0 = _compute_confidence_level(ls0)
                     return (
                         s0,
-                        h0,
                         tr_empty,
                         ls0,
                         c0,
@@ -2177,13 +2191,11 @@ def build_blocks() -> gr.Blocks:
                         _episode_trace_html(tr_empty, False),
                         _flow_badge(o, None),
                         _play_footer_html(o),
-                        h_html,
                     ) + bup
 
                 def on_step(
                     s: dict | None,
                     user_action: int,
-                    hist: dict | None,
                     ep_tr: list | None,
                     live: dict | None,
                 ) -> tuple:
@@ -2202,14 +2214,11 @@ def build_blocks() -> gr.Blocks:
                         new_idx = _newly_revealed_index(pre_clues, o.revealed_clues)
                     next_s: dict = {"env": e, "pre_obs": _snapshot(o)}
                     bup = _button_state_from_obs(o)
-                    h_new = _log_after_step(hist, user_action, o)
-                    h_html = _log_to_html(h_new)
                     new_tr = _append_episode_trace(ep_tr, o)
                     new_live = _update_live_stats(live, o)
                     c_new = _compute_confidence_level(new_live)
                     return (
                         next_s,
-                        h_new,
                         new_tr,
                         new_live,
                         c_new,
@@ -2226,7 +2235,6 @@ def build_blocks() -> gr.Blocks:
                         _episode_trace_html(new_tr, o.done),
                         _flow_badge(o, user_action),
                         _play_footer_html(o),
-                        h_html,
                     ) + bup
 
                 b_reset.click(
@@ -2235,23 +2243,23 @@ def build_blocks() -> gr.Blocks:
                     outputs=_out_play,
                 )
                 b_low.click(
-                    lambda s, h, t, lv: on_step(s, 0, h, t, lv),
-                    inputs=[st, history_state, episode_trace, live_stats],
+                    lambda s, t, lv: on_step(s, 0, t, lv),
+                    inputs=[st, episode_trace, live_stats],
                     outputs=_out_play,
                 )
                 b_high.click(
-                    lambda s, h, t, lv: on_step(s, 1, h, t, lv),
-                    inputs=[st, history_state, episode_trace, live_stats],
+                    lambda s, t, lv: on_step(s, 1, t, lv),
+                    inputs=[st, episode_trace, live_stats],
                     outputs=_out_play,
                 )
                 b_commit.click(
-                    lambda s, h, t, lv: on_step(s, 2, h, t, lv),
-                    inputs=[st, history_state, episode_trace, live_stats],
+                    lambda s, t, lv: on_step(s, 2, t, lv),
+                    inputs=[st, episode_trace, live_stats],
                     outputs=_out_play,
                 )
                 b_skip.click(
-                    lambda s, h, t, lv: on_step(s, 3, h, t, lv),
-                    inputs=[st, history_state, episode_trace, live_stats],
+                    lambda s, t, lv: on_step(s, 3, t, lv),
+                    inputs=[st, episode_trace, live_stats],
                     outputs=_out_play,
                 )
             with gr.Tab("Compare"):
