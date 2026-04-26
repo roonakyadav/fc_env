@@ -1,0 +1,9 @@
+{
+  "model": "distilgpt2",
+  "training_episodes": 20,
+  "eval_episodes": 50,
+  "random_baseline_mean": -0.7212,
+  "trl_policy_mean": -1.4256,
+  "improvement": -0.7044,
+  "parse_success_rate": 0.3032
+}

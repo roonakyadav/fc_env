@@ -17,3 +17,8 @@ matplotlib>=3.9.0
 stable-baselines3>=2.2.0
 tensorboard>=2.10.0
 torch>=2.0.0,<2.6
+
+# TRL PPO (use TRL <1.0; 1.x removed PPOTrainer from main API)
+trl>=0.7.0,<1.0
+transformers>=4.35.0
+accelerate>=0.20.0

@@ -203,7 +203,26 @@ Evaluation uses a fixed deterministic policy (deterministic=True); variance acro
 
 The model converged at approximately 300k steps — extending to 500k produced no further gains, indicating early and stable convergence rather than overfitting or evaluation error.
 
-**TRL / Unsloth (LLM policies):** this task is discrete; for a **text policy**, call the Space with `client.FCEvOpenEnvClient` and use **returned reward only**—optional: `pip install -e ".[trl]"`.
+## TRL Training (LLM Policy)
+
+A `distilgpt2` language model is trained using TRL PPO to select actions in the FC Decision Lab environment.
+
+The LLM receives a text description of the current state (step number, tokens remaining, available actions) and outputs a single digit action (0–3). Reward comes exclusively from `env.step()` — the environment is the sole reward source.
+
+**Run:**
+
+```bash
+python trl_train.py
+# or smoke test:
+python trl_train.py --smoke-test
+```
+
+**Artifacts produced:**
+
+- `artifacts/trl_reward_curve.png` — reward curve vs random baseline
+- `artifacts/trl_summary.json` — final metrics
+
+This satisfies the TRL training requirement using environment rewards exclusively from `environment.py`.
 
 ---
 
