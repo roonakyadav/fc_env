@@ -17,6 +17,9 @@ REWARD_PLOT = os.path.join(ARTIFACT_DIR, "reward_curve.png")
 WINRATE_PLOT = os.path.join(ARTIFACT_DIR, "win_rate_vs_random.png")
 QTABLE_PATH = os.path.join(ARTIFACT_DIR, "q_table.json")
 EVAL_PATH = os.path.join(ARTIFACT_DIR, "evaluation.json")
+# Override for fair multi-run comparisons, e.g. FC_EVAL_OUTPUT=artifacts/eval_300k.json
+FC_EVAL_OUTPUT = os.getenv("FC_EVAL_OUTPUT", "").strip()
+EVAL_OUTPUT_PATH = FC_EVAL_OUTPUT if FC_EVAL_OUTPUT else EVAL_PATH
 SB3_MODEL_PATH = os.path.join("models", "final_model.zip")
 BEST_MODEL_DIR = os.path.join("models", "best")
 VEC_NORMALIZE_PATH = os.path.join("models", "vecnormalize.pkl")
@@ -214,7 +217,9 @@ def evaluate_ppo_vec(
     steps: list[int] = []
     gym0 = venv.venv.envs[0]
 
-    for _ in range(episodes):
+    for ep in range(episodes):
+        # Same per-episode seeds across runs so win_rate / reward comparisons are not eval-luck.
+        venv.seed(seed + ep)
         r_out = venv.reset()
         if isinstance(r_out, (tuple, list)) and r_out is not None:
             obs0 = r_out[0]
@@ -392,6 +397,7 @@ def run_training_pipeline(seed: int = SEED) -> dict:
     )
 
     result: dict[str, Any] = {
+        "seed": seed,
         "attempt_used": best["attempt"],
         "random_eval": {
             "win_rate": round(best["baseline_win_rate"], 4),
@@ -419,7 +425,7 @@ def run_training_pipeline(seed: int = SEED) -> dict:
         "ppo_timesteps": PPO_TIMESTEPS,
     }
 
-    with open(EVAL_PATH, "w", encoding="utf-8") as f:
+    with open(EVAL_OUTPUT_PATH, "w", encoding="utf-8") as f:
         json.dump(result, f, indent=2)
     return result
 
@@ -442,7 +448,7 @@ def main() -> None:
         f"PPO:  reward={pe['avg_reward']:.3f} win={pe['win_rate']:.3f} "
         f"tok={pe['avg_tokens_used']:.2f} steps={pe['avg_steps']:.2f}"
     )
-    print(f"Saved metrics: {METRICS_CSV}, {EVAL_PATH}")
+    print(f"Saved metrics: {METRICS_CSV}, {EVAL_OUTPUT_PATH}")
     print(f"Saved plots: {REWARD_PLOT}, {WINRATE_PLOT}")
     print(f"SB3 PPO model: {result['sb3_model_path']}")
     print(f"VecNormalize: {result['vecnorm_path']}")

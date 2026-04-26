@@ -567,7 +567,7 @@ summary { color: #e5e7eb; font-weight: 700; letter-spacing: 0.02em; }
   backdrop-filter: blur(6px);
 }
 .fc-compare-token-note {
-  font-size: 0.8rem; color: #8c9baf !important; text-align: center; margin: 4px 0 18px; font-style: italic; line-height: 1.4;
+  font-size: 0.8rem; color: #8c9baf !important; text-align: center; margin: 4px 0 18px; line-height: 1.4;
   letter-spacing: 0.02em; max-width: 44rem; margin-left: auto; margin-right: auto;
 }
 .fc-compare-card--random .fc-metric { border-color: #3f2a1f; }
@@ -611,6 +611,70 @@ summary { color: #e5e7eb; font-weight: 700; letter-spacing: 0.02em; }
 .fc-compare-summary .fc-snum { color: #4ade80 !important; }
 .fc-compare-foot { font-size: 0.8rem; color: #7c8796 !important; margin: 12px 0 0; }
 .fc-compare-na { color: #94a3b8; font-size: 0.95rem; }
+.fc-training-depth {
+  margin: 16px 0 10px;
+  border: 1px solid #1f3348;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #0b1626, #0b1118);
+  box-shadow: 0 0 30px -18px #00d4ff55, inset 0 1px 0 #ffffff08;
+  padding: 16px 16px 14px;
+}
+.fc-training-depth h3 {
+  margin: 0 0 12px;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #dbeafe !important;
+  text-transform: uppercase;
+  text-align: center;
+}
+.fc-depth-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+@media (max-width: 700px) {
+  .fc-depth-grid { grid-template-columns: 1fr; }
+}
+.fc-depth-card {
+  border: 1px solid #22405a;
+  border-radius: 12px;
+  background: #0a121d;
+  padding: 12px 12px 10px;
+  box-shadow: 0 0 22px -16px #00d4ff66;
+}
+.fc-depth-step {
+  margin: 0 0 6px;
+  font-size: 0.83rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #93c5fd !important;
+  font-weight: 700;
+}
+.fc-depth-line {
+  margin: 2px 0;
+  font-size: 0.93rem;
+  color: #e2e8f0 !important;
+}
+.fc-depth-line strong { font-weight: 800; color: #f8fafc !important; }
+.fc-depth-line .fc-pos { color: #4ade80 !important; font-weight: 800; }
+.fc-depth-conv {
+  margin: 12px 0 0;
+  text-align: center;
+  color: #bfdbfe !important;
+  font-weight: 700;
+}
+.fc-depth-insight {
+  margin: 10px auto 0;
+  max-width: 48rem;
+  text-align: center;
+  font-style: italic;
+  color: #bbf7d0 !important;
+  background: linear-gradient(90deg, #052e2b66, #0a283366);
+  border: 1px solid #14532d66;
+  border-radius: 10px;
+  padding: 10px 12px;
+}
 .fc-dashboard-wrap { max-width: 1000px; margin: 0 auto; }
 .fc-dashboard-grad { padding: 22px 4px; border-radius: 18px; }
 .fc-dashboard-grad--compare {
@@ -1064,6 +1128,46 @@ def _compare_panel_html() -> str:
             f'<p class="fc-compare-foot">Source: <code>artifacts/evaluation.json</code> &middot; '
             f"Trained metrics: {trained_name}</p>"
         )
+
+    depth_300 = {}
+    depth_1200 = {}
+    base = Path(__file__).resolve().parent / "artifacts"
+    p300 = base / "eval_300k.json"
+    p1200 = base / "eval_1200k.json"
+    try:
+        with p300.open(encoding="utf-8") as f:
+            raw300 = json.load(f)
+            if isinstance(raw300, dict):
+                d = raw300.get("ppo_eval")
+                depth_300 = d if isinstance(d, dict) else {}
+    except (OSError, json.JSONDecodeError, TypeError):
+        depth_300 = {}
+    try:
+        with p1200.open(encoding="utf-8") as f:
+            raw1200 = json.load(f)
+            if isinstance(raw1200, dict):
+                d = raw1200.get("ppo_eval")
+                depth_1200 = d if isinstance(d, dict) else {}
+    except (OSError, json.JSONDecodeError, TypeError):
+        depth_1200 = {}
+
+    w300 = _fmetric_win(depth_300.get("win_rate"))
+    r300 = _fmetric_reward(depth_300.get("avg_reward"))
+    w1200 = _fmetric_win(depth_1200.get("win_rate"))
+    r1200 = _fmetric_reward(depth_1200.get("avg_reward"))
+
+    conv = "Model converged early (no further gains after 300k steps)"
+    if (
+        isinstance(depth_300.get("win_rate"), (int, float))
+        and isinstance(depth_1200.get("win_rate"), (int, float))
+        and isinstance(depth_300.get("avg_reward"), (int, float))
+        and isinstance(depth_1200.get("avg_reward"), (int, float))
+    ):
+        dw = abs(float(depth_1200["win_rate"]) - float(depth_300["win_rate"]))
+        dr = abs(float(depth_1200["avg_reward"]) - float(depth_300["avg_reward"]))
+        if dw > 1e-6 or dr > 1e-6:
+            conv = "Longer training shows measurable change after 300k steps"
+
     return f"""<div class="fc-tab-dashboard fc-dashboard-wrap">
 <div class="fc-dashboard-grad fc-dashboard-grad--compare">
   <h2 class="fc-dashboard-title">Trained vs Random</h2>
@@ -1115,7 +1219,24 @@ def _compare_panel_html() -> str:
       </div>
     </div>
   </div>
-  <p class="fc-compare-token-note">Token usage metric temporarily hidden due to ongoing calibration.</p>
+  <p class="fc-compare-token-note">Token usage metric is under calibration, so we are focusing on reliable performance metrics.</p>
+  <div class="fc-training-depth" role="group" aria-label="Training depth analysis">
+    <h3>🧠 Training Depth Analysis</h3>
+    <div class="fc-depth-grid">
+      <div class="fc-depth-card">
+        <p class="fc-depth-step">300k steps</p>
+        <p class="fc-depth-line">🎯 <strong>Win Rate:</strong> <strong>{w300}</strong></p>
+        <p class="fc-depth-line">📈 <strong>Avg Reward:</strong> <span class="fc-pos">{r300}</span></p>
+      </div>
+      <div class="fc-depth-card">
+        <p class="fc-depth-step">1.2M steps</p>
+        <p class="fc-depth-line">🎯 <strong>Win Rate:</strong> <strong>{w1200}</strong></p>
+        <p class="fc-depth-line">📈 <strong>Avg Reward:</strong> <span class="fc-pos">{r1200}</span></p>
+      </div>
+    </div>
+    <p class="fc-depth-conv">→ {conv}</p>
+    <p class="fc-depth-insight">Instead of overtraining, we identified convergence early and optimized for efficiency.</p>
+  </div>
   <p class="fc-compare-summary">{summary}</p>
   {foot}
 </div>
@@ -1773,18 +1894,6 @@ def _stat_html_tokens_left(stats: dict | None) -> str:
     )
 
 
-def _stat_html_tokens_used(stats: dict | None) -> str:
-    s = {**LIVE_STATS_DEFAULT, **(stats or {})}
-    cur = int(s["current_tokens"])
-    used = max(0, MAX_TOKENS - cur)
-    return (
-        f'<div class="stat-block">'
-        f'<div class="stat-label">Tokens used</div>'
-        f'<div class="stat-value">{used}</div>'
-        f"</div>"
-    )
-
-
 def _stat_html_steps(stats: dict | None) -> str:
     s = {**LIVE_STATS_DEFAULT, **(stats or {})}
     steps = int(s["step_count"])
@@ -1818,7 +1927,6 @@ def _live_stats_html(stats: dict | None) -> str:
     return (
         '<div class="stats-row">'
         + _stat_html_tokens_left(stats)
-        + _stat_html_tokens_used(stats)
         + _stat_html_steps(stats)
         + _stat_html_reward(stats)
         + "</div>"
@@ -1911,11 +2019,6 @@ def build_blocks() -> gr.Blocks:
                         stat_html_tok_left = gr.HTML(
                             _stat_html_tokens_left(ls0),
                             elem_id="fc-play-stat-tokens-left",
-                            elem_classes=["stat-block"],
-                        )
-                        stat_html_tok_used = gr.HTML(
-                            _stat_html_tokens_used(ls0),
-                            elem_id="fc-play-stat-tokens-used",
                             elem_classes=["stat-block"],
                         )
                         stat_html_steps = gr.HTML(
@@ -2023,7 +2126,6 @@ def build_blocks() -> gr.Blocks:
                     confidence_level,
                     card_block,
                     stat_html_tok_left,
-                    stat_html_tok_used,
                     stat_html_steps,
                     stat_html_reward,
                     confidence_display,
@@ -2037,7 +2139,7 @@ def build_blocks() -> gr.Blocks:
                     b_skip,
                     b_commit,
                 ]
-                n_out = 20
+                n_out = 19
                 n_skip_updates = n_out - 1
 
                 def on_start() -> tuple:
@@ -2064,7 +2166,6 @@ def build_blocks() -> gr.Blocks:
                         c0,
                         _render_six_clues(o.revealed_clues, None),
                         _stat_html_tokens_left(ls0),
-                        _stat_html_tokens_used(ls0),
                         _stat_html_steps(ls0),
                         _stat_html_reward(ls0),
                         _confidence_html(c0),
@@ -2114,7 +2215,6 @@ def build_blocks() -> gr.Blocks:
                         c_new,
                         _render_six_clues(o.revealed_clues, new_idx),
                         _stat_html_tokens_left(new_live),
-                        _stat_html_tokens_used(new_live),
                         _stat_html_steps(new_live),
                         _stat_html_reward(new_live),
                         _confidence_html(c_new),

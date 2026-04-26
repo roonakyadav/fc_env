@@ -1,0 +1,28 @@
+{
+  "seed": 42,
+  "attempt_used": 1,
+  "random_eval": {
+    "win_rate": 0.2367,
+    "avg_reward": -0.4448,
+    "avg_tokens_used": 9.91,
+    "avg_steps": 1.92
+  },
+  "q_tabular_eval": {
+    "win_rate": 0.68,
+    "avg_reward": 0.5444,
+    "avg_tokens_used": 10.0,
+    "avg_steps": 3.0
+  },
+  "ppo_eval": {
+    "win_rate": 0.6967,
+    "avg_reward": 1.0662,
+    "avg_tokens_used": 0.0,
+    "avg_steps": 6.0
+  },
+  "q_reward_delta": 0.9892,
+  "q_win_rate_delta": 0.4433,
+  "sb3_model_path": "models/final_model.zip",
+  "vecnorm_path": "models/vecnormalize.pkl",
+  "sb3_eval_best_dir": "models/best",
+  "ppo_timesteps": 300000
+}
