@@ -771,310 +771,357 @@ GRADIO_APP_FONT_LINKS = """
 # Play tab: complete skin; every declaration uses !important (Gradio loads CSS after ours).
 PLAY_TAB_HEAD_INJECT = r"""
 <style id="fc-play-styles">
-.play-tab { background: #0A0A0A !important; color: #E0E0E0 !important; overflow: visible !important; }
-.play-tab .gap { gap: 12px !important; }
+#fc-play-root.play-tab {
+  max-width: 980px !important;
+  margin: 0 auto !important;
+  padding: 18px 20px 20px !important;
+  box-sizing: border-box !important;
+  background:
+    radial-gradient(130% 80% at 10% -10%, rgba(22, 57, 106, 0.32), transparent 55%),
+    radial-gradient(120% 80% at 90% 0%, rgba(17, 73, 86, 0.28), transparent 52%),
+    linear-gradient(155deg, #0a0e1a 0%, #090d17 45%, #080b14 100%) !important;
+  border-radius: 18px !important;
+  border: 1px solid #1b2438 !important;
+}
+
+.play-tab,
 .play-tab .wrap,
-.play-tab [class*="block"] { background: transparent !important; border: none !important; box-shadow: none !important; }
-.play-tab .card-grid.wrap,
-.play-tab .card-grid [class*="wrap"],
-.play-tab .card-grid [class*="column"] { padding: 0 !important; margin: 0 !important; gap: 12px !important; }
-.play-tab input,
-.play-tab textarea {
-  background: #111111 !important;
-  border: 1px solid #1E1E1E !important;
-  color: #E0E0E0 !important;
+.play-tab [class*="block"],
+.play-tab .gr-block {
+  background: transparent !important;
+  color: #dfe7f7 !important;
+  border: none !important;
   box-shadow: none !important;
 }
 
-#fc-play-root.play-tab {
-  max-width: 860px !important;
-  margin: 0 auto !important;
-  padding: 24px 20px !important;
-  box-sizing: border-box !important;
+.play-tab .card {
+  margin: 0 !important;
+  padding: 0 !important;
 }
+.play-tab .card + .card { margin-top: 14px !important; }
+.play-tab .section-title {
+  margin: 0 0 8px !important;
+  font-size: 0.68rem !important;
+  letter-spacing: 0.11em !important;
+  text-transform: uppercase !important;
+  color: #7f91b4 !important;
+  border: none !important;
+  padding: 0 !important;
+}
+.play-tab .panel-board .section-title,
+.play-tab .panel-stats .section-title,
+.play-tab .panel-confidence .section-title,
+.play-tab .panel-actions .section-title { display: none !important; }
 
 .play-tab .play-header h1 {
-  font-size: 26px !important;
+  font-size: 1.05rem !important;
+  letter-spacing: 0.12em !important;
   font-weight: 700 !important;
-  letter-spacing: -0.4px !important;
-  color: #F0F0F0 !important;
-  margin: 0 0 4px !important;
+  color: #6e7da0 !important;
+  margin: 0 !important;
+  text-transform: uppercase !important;
 }
 .play-tab .play-header p,
 .play-tab .play-header .fc-play-tagline {
-  font-size: 11px !important;
-  text-transform: uppercase !important;
-  letter-spacing: 0.1em !important;
-  color: #444444 !important;
-  margin: 0 0 20px !important;
+  margin: 6px 0 10px !important;
+  color: #8795b3 !important;
+  font-size: 0.83rem !important;
 }
-.play-tab .fc-play-header-line {
-  height: 1px !important;
-  background: #1E1E1E !important;
-  margin: 0 0 16px !important;
-}
-
-.play-tab .start-btn > div > button,
-.play-tab .start-btn > div > .gr-button,
-.play-tab .start-btn button,
-.play-tab .start-btn .gr-button {
-  background: #0A0A0A !important;
-  border: 1px solid #C8FF00 !important;
-  color: #C8FF00 !important;
-  height: 50px !important;
-  min-height: 50px !important;
-  width: 100% !important;
-  max-width: 100% !important;
-  font-size: 12px !important;
-  font-weight: 700 !important;
-  letter-spacing: 0.12em !important;
-  text-transform: uppercase !important;
-  border-radius: 6px !important;
-  box-shadow: none !important;
-  transition: background 120ms ease, color 120ms ease, border-color 120ms ease !important;
-}
-.play-tab .start-btn button:hover,
-.play-tab .start-btn .gr-button:hover {
-  background: #C8FF00 !important;
-  color: #0A0A0A !important;
-  border-color: #C8FF00 !important;
-}
+.play-tab .fc-play-header-line { display: none !important; }
 
 .play-tab .stats-row {
   display: flex !important;
-  flex-direction: row !important;
-  align-items: stretch !important;
+  justify-content: flex-end !important;
+  flex-wrap: wrap !important;
+  gap: 10px !important;
   width: 100% !important;
-  max-width: 900px !important;
-  margin: 0 auto !important;
-  border: none !important;
-  gap: 16px !important;
-  padding: 0 !important;
-  background: transparent !important;
+  margin: 0 0 2px !important;
 }
-.play-tab .stats-row > div {
-  flex: 1 !important;
-  min-width: 0 !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  background: transparent !important;
-  border: none !important;
+.play-tab .stats-row > div { flex: 0 0 auto !important; }
+.play-tab .fc-stat-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 999px;
+  padding: 7px 14px 7px 11px;
+  border: 1px solid #2a3a5c;
+  background: linear-gradient(180deg, rgba(19, 29, 47, 0.95), rgba(14, 22, 37, 0.95));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 8px 20px -16px #000;
+  font-family: "JetBrains Mono", monospace;
 }
-.play-tab .stat-block {
-  padding: 16px 0 !important;
-  text-align: center !important;
-  margin: 0 !important;
-  background: #0d1118 !important;
-  border: 1px solid #1e2a3a !important;
-  border-radius: 10px !important;
+.play-tab .fc-chip-ico { font-size: 0.95rem; opacity: 0.95; }
+.play-tab .fc-chip-lbl {
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  color: #8ea1c7;
+  text-transform: uppercase;
 }
-.play-tab .card {
-  background: rgba(255,255,255,0.02) !important;
-  border: 1px solid rgba(255,255,255,0.08) !important;
-  border-radius: 12px !important;
-  padding: 16px !important;
-  margin-bottom: 18px !important;
-  box-shadow: none !important;
+.play-tab .fc-chip-val { font-size: 0.93rem; font-weight: 700; color: #f5f9ff; }
+.play-tab .fc-chip-val.pos { color: #62f4ad; }
+.play-tab .fc-chip-val.neg { color: #ff7f7f; }
+
+.play-tab .start-btn > div,
+.play-tab .start-btn > div > div {
+  display: flex !important;
+  justify-content: center !important;
 }
-.play-tab .card:hover {
-  border-color: rgba(0, 255, 200, 0.3) !important;
-}
-.play-tab .section-title {
-  font-size: 14px !important;
-  color: #9aa4b2 !important;
-  margin: 0 0 8px !important;
+.play-tab .start-btn button,
+.play-tab .start-btn .gr-button {
+  width: min(320px, 100%) !important;
+  min-height: 48px !important;
+  border-radius: 999px !important;
+  border: 1px solid #2ec7ff !important;
+  background: linear-gradient(180deg, rgba(20, 36, 58, 0.95), rgba(14, 26, 45, 0.95)) !important;
+  color: #ddf7ff !important;
   text-transform: uppercase !important;
-  letter-spacing: 1px !important;
-  border: none !important;
-  padding: 0 !important;
+  letter-spacing: 0.12em !important;
+  font-size: 0.72rem !important;
+  font-weight: 800 !important;
+  box-shadow: 0 0 0 1px rgba(46, 199, 255, 0.18) inset, 0 0 22px -8px rgba(16, 215, 255, 0.55) !important;
+  animation: fcStartPulse 1.8s ease-in-out infinite !important;
 }
-.play-tab .fc-history-scroll {
-  max-height: 250px !important;
-  overflow-y: auto !important;
-  padding-right: 4px !important;
+@keyframes fcStartPulse {
+  0% { box-shadow: 0 0 0 1px rgba(46, 199, 255, 0.18) inset, 0 0 16px -8px rgba(16, 215, 255, 0.4); }
+  50% { box-shadow: 0 0 0 1px rgba(46, 199, 255, 0.34) inset, 0 0 30px -6px rgba(16, 215, 255, 0.8); }
+  100% { box-shadow: 0 0 0 1px rgba(46, 199, 255, 0.18) inset, 0 0 16px -8px rgba(16, 215, 255, 0.4); }
 }
-.play-tab .stat-label {
-  font-size: 9px !important;
-  text-transform: uppercase !important;
-  letter-spacing: 0.14em !important;
-  color: #444444 !important;
-  margin: 0 0 8px !important;
+
+.play-tab .fc-encore-board { margin: 10px auto 0 !important; max-width: 860px; }
+.play-tab .fc-board-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 4px 0 10px;
 }
-.play-tab .stat-value {
-  font-size: 28px !important;
-  font-weight: 700 !important;
-  font-family: "JetBrains Mono", monospace !important;
-  line-height: 1 !important;
-  display: block !important;
-  color: #E0E0E0 !important;
-  margin: 0 !important;
+.play-tab .fc-board-title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #edf4ff;
+  letter-spacing: 0.08em;
 }
-.play-tab .stat-value.accent { color: #C8FF00 !important; }
-.play-tab .stat-value.danger { color: #FF4444 !important; }
-.play-tab .stat-value.zero { color: #333333 !important; }
+.play-tab .fc-board-count {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.78rem;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #15253f;
+  border: 1px solid #34537f;
+  color: #91bbff;
+}
+.play-tab .fc-clue-grid-host {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+@media (max-width: 780px) {
+  .play-tab .fc-clue-grid-host { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+.play-tab .fc-encore-card {
+  position: relative;
+  min-height: 136px;
+  border-radius: 14px;
+  border: 1px solid #2a3a5c;
+  background: linear-gradient(180deg, #1a2035, #13192a);
+  padding: 12px 12px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transition: box-shadow .18s ease, transform .18s ease, border-color .18s ease;
+}
+.play-tab .fc-encore-card::after {
+  content: "";
+  position: absolute;
+  inset: -40% 40% auto -40%;
+  height: 160%;
+  transform: rotate(17deg);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+  opacity: 0;
+  transition: opacity .2s ease;
+}
+.play-tab .fc-encore-card:hover { box-shadow: 0 0 22px -10px rgba(83, 136, 255, 0.7); border-color: #3d5688; transform: translateY(-1px); }
+.play-tab .fc-encore-card:hover::after { opacity: 1; }
+.play-tab .fc-encore-card.is-new { box-shadow: 0 0 0 1px #6effc8 inset, 0 0 26px -10px #4efbc0; }
+
+.play-tab .fc-card-tier {
+  position: absolute;
+  left: 10px;
+  top: 9px;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  border-radius: 999px;
+  padding: 3px 10px;
+  border: 1px solid;
+}
+.play-tab .fc-encore-card.is-low .fc-card-tier {
+  color: #72f9ff;
+  border-color: #2ad4dd;
+  background: rgba(17, 94, 102, 0.28);
+}
+.play-tab .fc-encore-card.is-high .fc-card-tier {
+  color: #ffd69b;
+  border-color: #f5a64a;
+  background: rgba(140, 76, 16, 0.3);
+}
+
+.play-tab .fc-card-hidden {
+  text-align: center;
+  color: #6b7895;
+  line-height: 1.2;
+}
+.play-tab .fc-card-hidden .ico { font-size: 1.7rem; display: block; margin-bottom: 3px; opacity: 0.78; }
+.play-tab .fc-card-hidden .q { letter-spacing: 0.34em; font-family: "JetBrains Mono", monospace; font-size: 0.95rem; }
+.play-tab .fc-card-revealed { text-align: center; padding-top: 16px; max-width: 100%; }
+.play-tab .fc-card-clue {
+  color: #f7fbff;
+  font-size: 1.02rem;
+  font-weight: 700;
+  line-height: 1.22;
+  text-shadow: 0 0 18px rgba(87, 171, 255, 0.18);
+  word-break: break-word;
+}
+.play-tab .fc-card-attr {
+  margin-top: 7px;
+  color: #8ea1c7;
+  font-size: 0.66rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.play-tab .fc-play-footer {
+  margin: 10px auto 0 !important;
+  max-width: 860px;
+  border-radius: 10px;
+  border: 1px solid #1f2b46;
+  background: #0f1627;
+  padding: 8px 10px;
+}
+.play-tab .fc-counter-row,
+.play-tab .fc-token-label { color: #9fb0d0 !important; font-family: "JetBrains Mono", monospace !important; font-size: 0.78rem !important; }
+.play-tab .fc-token-track { height: 6px !important; background: #09101d !important; border-color: #1f2a3e !important; }
 
 .play-tab .confidence-shell {
-  border-left: 3px solid #C8FF00 !important;
-  padding: 12px 16px !important;
-  background: #0E0E0E !important;
-  border-radius: 0 4px 4px 0 !important;
-  overflow: visible !important;
-  margin: 0 auto 16px !important;
-  max-width: 900px !important;
-  border-top: 1px solid #1E1E1E !important;
-  border-right: 1px solid #1E1E1E !important;
-  border-bottom: 1px solid #1E1E1E !important;
-  box-shadow: none !important;
+  margin: 6px auto 2px !important;
+  max-width: 860px !important;
+  border: 1px solid #243553 !important;
+  border-radius: 9px !important;
+  background: linear-gradient(180deg, #10192c, #0d1625) !important;
+  padding: 10px 12px !important;
+  display: grid !important;
+  grid-template-columns: auto 1fr auto !important;
+  align-items: center !important;
+  gap: 10px !important;
 }
 .play-tab .confidence-lbl {
-  font-size: 10px !important;
-  letter-spacing: 0.12em !important;
-  color: #444444 !important;
-  text-transform: uppercase !important;
-  margin: 0 0 6px !important;
-}
-.play-tab .confidence-txt {
-  font-size: 15px !important;
-  color: #E0E0E0 !important;
-  font-family: "JetBrains Mono", monospace !important;
-  margin: 0 !important;
-  line-height: 1.35 !important;
-}
-.play-tab .confidence-txt--hi { color: #C8FF00 !important; }
-.play-tab .confidence-txt--med { color: #888888 !important; }
-.play-tab .confidence-txt--lo { color: #FF4444 !important; }
-.play-tab .confidence-txt--unk { color: #666666 !important; }
-
-.play-tab .btn-grid { gap: 10px !important; }
-.play-tab .btn-grid > div {
-  flex: 1 !important;
-  min-width: 0 !important;
-}
-.play-tab .btn-low button,
-.play-tab .btn-low .gr-button,
-.play-tab .btn-high button,
-.play-tab .btn-high .gr-button,
-.play-tab .btn-ghost button,
-.play-tab .btn-ghost .gr-button,
-.play-tab .btn-commit button,
-.play-tab .btn-commit .gr-button {
-  width: 100% !important;
-  height: 44px !important;
-  min-height: 44px !important;
-  border-radius: 6px !important;
-  font-size: 11px !important;
-  font-weight: 700 !important;
+  color: #8ea1c7 !important;
   letter-spacing: 0.1em !important;
+  font-size: 0.65rem !important;
   text-transform: uppercase !important;
-  transition: background 100ms ease, border-color 100ms ease, color 100ms ease !important;
-  cursor: pointer !important;
-  box-shadow: none !important;
+  margin: 0 !important;
 }
-.play-tab .btn-low button,
-.play-tab .btn-low .gr-button {
-  background: transparent !important;
-  border: 1px solid #2A2A2A !important;
-  color: #888888 !important;
+.play-tab .confidence-track {
+  height: 7px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #0a111e;
+  border: 1px solid #22314d;
 }
-.play-tab .btn-low button:hover,
-.play-tab .btn-low .gr-button:hover {
-  border-color: #C8FF00 !important;
-  color: #C8FF00 !important;
+.play-tab .confidence-fill { height: 100%; border-radius: inherit; transition: width .2s ease; }
+.play-tab .confidence-fill--hi { width: 88%; background: linear-gradient(90deg, #1fde9a, #00e676); }
+.play-tab .confidence-fill--med { width: 58%; background: linear-gradient(90deg, #ffc46a, #ff9800); }
+.play-tab .confidence-fill--lo { width: 28%; background: linear-gradient(90deg, #ff8a80, #ff5252); }
+.play-tab .confidence-fill--unk { width: 8%; background: linear-gradient(90deg, #5f7297, #7f93ba); }
+.play-tab .confidence-txt { margin: 0 !important; font-size: 0.8rem !important; font-weight: 700 !important; text-align: right !important; font-family: "JetBrains Mono", monospace !important; }
+.play-tab .confidence-txt--hi { color: #4ef3b7 !important; }
+.play-tab .confidence-txt--med { color: #ffc46a !important; }
+.play-tab .confidence-txt--lo { color: #ff8383 !important; }
+.play-tab .confidence-txt--unk { color: #a0b0ce !important; }
+
+.play-tab .btn-grid {
+  max-width: 520px !important;
+  margin: 0 auto !important;
+  gap: 10px !important;
 }
-.play-tab .btn-high button,
-.play-tab .btn-high .gr-button {
-  background: transparent !important;
-  border: 1px solid #3A1010 !important;
-  color: #CC3333 !important;
-}
-.play-tab .btn-high button:hover,
-.play-tab .btn-high .gr-button:hover {
-  border-color: #FF5555 !important;
-  color: #FF5555 !important;
-}
-.play-tab .btn-ghost button,
-.play-tab .btn-ghost .gr-button {
-  background: transparent !important;
-  border: 1px solid #1E1E1E !important;
-  color: #555555 !important;
-}
-.play-tab .btn-ghost button:hover,
-.play-tab .btn-ghost .gr-button:hover {
-  border-color: #333333 !important;
-  color: #888888 !important;
-}
-.play-tab .btn-commit button,
-.play-tab .btn-commit .gr-button {
-  background: #C8FF00 !important;
-  border: none !important;
-  color: #0A0A0A !important;
+.play-tab .btn-grid button, .play-tab .btn-grid .gr-button {
+  width: 100% !important;
+  min-height: 46px !important;
+  border-radius: 8px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+  font-size: 0.74rem !important;
   font-weight: 800 !important;
 }
-.play-tab .btn-commit button:hover,
-.play-tab .btn-commit .gr-button:hover { background: #AADD00 !important; }
+#fc-play-btn-low button, #fc-play-btn-low .gr-button {
+  background: linear-gradient(180deg, #0bf6ff, #00d8de) !important;
+  border: 1px solid #2ef8ff !important;
+  color: #04222a !important;
+}
+#fc-play-btn-high button, #fc-play-btn-high .gr-button {
+  background: linear-gradient(180deg, #ffb347, #ff940f) !important;
+  border: 1px solid #ffc163 !important;
+  color: #281603 !important;
+}
+#fc-play-btn-refresh button, #fc-play-btn-refresh .gr-button {
+  background: transparent !important;
+  border: 1px solid #4b628f !important;
+  color: #dce8ff !important;
+}
+#fc-play-btn-commit button, #fc-play-btn-commit .gr-button {
+  background: linear-gradient(180deg, #1dff9c, #00e676) !important;
+  border: 1px solid #63ffb8 !important;
+  color: #032113 !important;
+  min-height: 50px !important;
+}
+.play-tab button:disabled, .play-tab .gr-button:disabled {
+  opacity: 0.5 !important;
+  filter: saturate(0.5) !important;
+}
 
 .play-tab .log-panel,
 .play-tab .fc-card-log,
-.play-tab .fc-play-log,
 .play-tab .fc-trace-panel {
-  background: #0D0D0D !important;
-  border: 1px solid #1A1A1A !important;
-  border-radius: 4px !important;
-  padding: 14px 18px !important;
-  box-shadow: none !important;
+  max-width: 860px !important;
+  margin: 0 auto !important;
+  border-radius: 10px !important;
+  border: 1px solid #1f2d47 !important;
+  background: #0a111e !important;
+  padding: 12px 13px !important;
 }
-.play-tab .log-label,
-.play-tab .fc-card-log h3,
-.play-tab .fc-trace-title {
-  font-size: 9px !important;
-  text-transform: uppercase !important;
-  letter-spacing: 0.15em !important;
-  color: #333333 !important;
-  margin: 0 0 8px !important;
-}
-.play-tab .log-content,
 .play-tab .fc-oneline-log,
+.play-tab .fc-play-log-meta,
 .play-tab .fc-trace-line,
 .play-tab .fc-trace-reason,
 .play-tab .fc-trace-empty {
-  font-size: 13px !important;
-  color: #777777 !important;
   font-family: "JetBrains Mono", monospace !important;
-  line-height: 1.6 !important;
+  color: #c5d3ec !important;
+  font-size: 0.8rem !important;
 }
-.play-tab .log-content .accent,
-.play-tab .fc-play-log-active { color: #C8FF00 !important; }
-.play-tab .fc-reward-pos { color: #C8FF00 !important; }
-.play-tab .fc-reward-neg { color: #FF4444 !important; }
-.play-tab .fc-reward-neu { color: #666666 !important; }
-.play-tab .fc-flow-line { color: #777777 !important; font-family: "JetBrains Mono", monospace !important; }
-.play-tab .fc-flow-line strong { color: #C8FF00 !important; }
+.play-tab .fc-reward-pos { color: #45f2af !important; }
+.play-tab .fc-reward-neg { color: #ff8383 !important; }
+.play-tab .fc-reward-neu { color: #b7c4df !important; }
 
-.play-tab .episode-accordion .label-wrap,
-.play-tab .episode-accordion label {
-  background: #111111 !important;
-  border: 1px solid #1E1E1E !important;
-  border-radius: 4px !important;
-  color: #444444 !important;
-  font-size: 11px !important;
-  text-transform: uppercase !important;
-  letter-spacing: 0.1em !important;
-}
 .play-tab .status-hint,
 .play-tab .fc-play-flow-live {
-  font-size: 12px !important;
-  color: #C8FF00 !important;
+  margin: 6px auto 2px !important;
+  max-width: 860px !important;
+  text-align: center !important;
+  color: #7686a8 !important;
+  font-style: italic !important;
+  font-size: 0.82rem !important;
   font-family: "JetBrains Mono", monospace !important;
-  padding: 8px 0 !important;
+  padding: 5px 0 !important;
 }
+.play-tab .status-hint strong,
+.play-tab .fc-flow-line strong { color: #9cb7e6 !important; }
+.play-tab .fc-history-scroll { max-height: 260px !important; overflow-y: auto !important; padding-right: 4px !important; }
 
-.play-tab .fc-conf-outer,
-.play-tab .fc-live-outer,
-.play-tab .fc-footer-wrap,
-.play-tab .fc-trace-outer { background: transparent !important; border: none !important; overflow: visible !important; }
-.play-tab .fc-history-entries { background: transparent !important; }
-.play-tab button:active,
-.play-tab .gr-button:active { transform: none !important; }
+@media (max-width: 640px) {
+  #fc-play-root.play-tab { padding: 14px 12px 16px !important; }
+  .play-tab .fc-chip-lbl { display: none; }
+  .play-tab .confidence-shell { grid-template-columns: 1fr !important; }
+  .play-tab .confidence-txt { text-align: left !important; }
+}
 </style>
 """
 
@@ -1384,95 +1431,43 @@ def _render_six_clues(
 ) -> str:
     if not revealed or len(revealed) < 6:
         revealed = [HIDDEN] * 6
-    grid_open = (
-        '<div class="fc-clue-grid-host" style="display:grid !important;'
-        "grid-template-columns:repeat(3,1fr) !important;"
-        "grid-template-rows:repeat(2,auto) !important;gap:10px !important;"
-        'margin:16px 0 !important;">'
-    )
-    parts: list[str] = [grid_open]
-    low_unrevealed = (
-        '<div class="clue-card low" style="background:#131313 !important;'
-        "border:1px solid #1E1E1E !important;border-radius:8px !important;"
-        "min-height:100px !important;padding:12px 16px !important;"
-        "position:relative !important;display:flex !important;"
-        "align-items:center !important;justify-content:center !important;\">"
-        '<span style="font-size:10px !important;font-weight:700 !important;'
-        "letter-spacing:0.12em !important;position:absolute !important;"
-        "top:10px !important;left:10px !important;padding:3px 8px !important;"
-        "border-radius:3px !important;background:#1A1A1A !important;"
-        "color:#555555 !important;border:1px solid #252525 !important;\">LOW</span>"
-        '<span style="font-size:20px !important;color:#2A2A2A !important;'
-        "font-family:'JetBrains Mono',monospace !important;"
-        'letter-spacing:0.5em !important;">???</span></div>'
-    )
-    high_unrevealed = (
-        '<div class="clue-card high" style="background:#131313 !important;'
-        "border:1px solid #1E1E1E !important;border-radius:8px !important;"
-        "min-height:100px !important;padding:12px 16px !important;"
-        "position:relative !important;display:flex !important;"
-        "align-items:center !important;justify-content:center !important;\">"
-        '<span style="font-size:10px !important;font-weight:700 !important;'
-        "letter-spacing:0.12em !important;position:absolute !important;"
-        "top:10px !important;left:10px !important;padding:3px 8px !important;"
-        "border-radius:3px !important;background:#1A0808 !important;"
-        "color:#FF4444 !important;border:1px solid #3A1010 !important;\">HIGH</span>"
-        '<span style="font-size:20px !important;color:#2A2A2A !important;'
-        "font-family:'JetBrains Mono',monospace !important;"
-        'letter-spacing:0.5em !important;">???</span></div>'
-    )
+    shown = sum(1 for x in revealed if x != HIDDEN)
+    parts: list[str] = [
+        '<div class="fc-encore-board">'
+        '<div class="fc-board-head">'
+        '<div class="fc-board-title">CLUES</div>'
+        f'<div class="fc-board-count">{shown}/6</div>'
+        "</div>"
+        '<div class="fc-clue-grid-host">'
+    ]
     for i in range(6):
         raw = revealed[i]  # type: ignore[index]
         label, value, hidden = _clue_label_value(raw)
         is_low = i < 3
-        hi_extra = ""
-        if highlight is not None and i == highlight and not hidden:
-            hi_extra = "outline:2px solid #C8FF00 !important;outline-offset:2px !important;"
+        tier = "LOW" if is_low else "HIGH"
+        tier_cls = "is-low" if is_low else "is-high"
+        new_cls = " is-new" if highlight is not None and i == highlight and not hidden else ""
         if hidden:
-            parts.append(low_unrevealed if is_low else high_unrevealed)
+            parts.append(
+                f'<div class="fc-encore-card {tier_cls} is-hidden">'
+                f'<span class="fc-card-tier">{tier}</span>'
+                '<div class="fc-card-hidden"><span class="ico">🔭</span>'
+                '<span class="q">? ? ?</span></div>'
+                "</div>"
+            )
             continue
         vhtml = _html_escape(value)
         lhtml = _html_escape(label)
-        if is_low:
-            card = (
-                f'<div class="clue-card low" style="background:#131313 !important;'
-                f"border:1px solid #C8FF00 !important;border-radius:8px !important;"
-                f"min-height:100px !important;padding:12px 16px !important;"
-                f"position:relative !important;{hi_extra}\">"
-                f'<span style="font-size:10px !important;font-weight:700 !important;'
-                f"letter-spacing:0.12em !important;position:absolute !important;"
-                f"top:10px !important;left:10px !important;padding:3px 8px !important;"
-                f"border-radius:3px !important;background:#1A2200 !important;"
-                f"color:#C8FF00 !important;border:1px solid #3A5500 !important;\">"
-                f"{lhtml}</span>"
-                f'<div style="display:flex !important;align-items:center !important;'
-                f"justify-content:center !important;height:100% !important;"
-                f'padding-top:20px !important;">'
-                f'<span style="font-size:22px !important;font-weight:700 !important;'
-                f"color:#F0F0F0 !important;font-family:'JetBrains Mono',monospace !important;\">"
-                f"{vhtml}</span></div></div>"
-            )
-        else:
-            card = (
-                f'<div class="clue-card high" style="background:#131313 !important;'
-                f"border:1px solid #FF4444 !important;border-radius:8px !important;"
-                f"min-height:100px !important;padding:12px 16px !important;"
-                f"position:relative !important;{hi_extra}\">"
-                f'<span style="font-size:10px !important;font-weight:700 !important;'
-                f"letter-spacing:0.12em !important;position:absolute !important;"
-                f"top:10px !important;left:10px !important;padding:3px 8px !important;"
-                f"border-radius:3px !important;background:#1A0808 !important;"
-                f"color:#FF4444 !important;border:1px solid #3A1010 !important;\">"
-                f"{lhtml}</span>"
-                f'<div style="display:flex !important;align-items:center !important;'
-                f"justify-content:center !important;height:100% !important;"
-                f'padding-top:20px !important;">'
-                f'<span style="font-size:22px !important;font-weight:700 !important;'
-                f"color:#F0F0F0 !important;font-family:'JetBrains Mono',monospace !important;\">"
-                f"{vhtml}</span></div></div>"
-            )
-        parts.append(card)
-    parts.append("</div>")
+        parts.append(
+            f'<div class="fc-encore-card {tier_cls} is-revealed{new_cls}">'
+            f'<span class="fc-card-tier">{tier}</span>'
+            '<div class="fc-card-revealed">'
+            f'<div class="fc-card-clue">{vhtml}</div>'
+            f'<div class="fc-card-attr">{lhtml}</div>'
+            "</div>"
+            "</div>"
+        )
+    parts.append("</div></div>")
     return "".join(parts)
 
 
@@ -1908,12 +1903,13 @@ def _update_live_stats(prev: dict | None, o) -> dict:
 def _stat_html_tokens_left(stats: dict | None) -> str:
     s = {**LIVE_STATS_DEFAULT, **(stats or {})}
     cur = int(s["current_tokens"])
-    cls = "accent" if cur > 20 else "danger"
+    cls = "neg" if cur <= 20 else ""
     return (
-        f'<div class="stat-block">'
-        f'<div class="stat-label">Tokens left</div>'
-        f'<div class="stat-value {cls}">{cur}</div>'
-        f"</div>"
+        '<div class="fc-stat-chip">'
+        '<span class="fc-chip-ico">🪙</span>'
+        '<span class="fc-chip-lbl">Tokens</span>'
+        f'<span class="fc-chip-val {cls}">{cur}</span>'
+        "</div>"
     )
 
 
@@ -1921,10 +1917,11 @@ def _stat_html_steps(stats: dict | None) -> str:
     s = {**LIVE_STATS_DEFAULT, **(stats or {})}
     steps = int(s["step_count"])
     return (
-        f'<div class="stat-block">'
-        f'<div class="stat-label">Steps</div>'
-        f'<div class="stat-value">{steps}</div>'
-        f"</div>"
+        '<div class="fc-stat-chip">'
+        '<span class="fc-chip-ico">📈</span>'
+        '<span class="fc-chip-lbl">Steps</span>'
+        f'<span class="fc-chip-val">{steps}</span>'
+        "</div>"
     )
 
 
@@ -1932,16 +1929,17 @@ def _stat_html_reward(stats: dict | None) -> str:
     s = {**LIVE_STATS_DEFAULT, **(stats or {})}
     tot = float(s["total_reward"])
     if tot > 1e-9:
-        cls, reward_str = "accent", f"+{tot:.2f}"
+        cls, reward_str = "pos", f"+{tot:.2f}"
     elif tot < -1e-9:
-        cls, reward_str = "danger", f"{tot:.2f}"
+        cls, reward_str = "neg", f"{tot:.2f}"
     else:
-        cls, reward_str = "zero", f"{tot:.2f}"
+        cls, reward_str = "", f"{tot:.2f}"
     return (
-        f'<div class="stat-block">'
-        f'<div class="stat-label">Total reward</div>'
-        f'<div class="stat-value {cls}">{reward_str}</div>'
-        f"</div>"
+        '<div class="fc-stat-chip">'
+        '<span class="fc-chip-ico">💰</span>'
+        '<span class="fc-chip-lbl">Reward</span>'
+        f'<span class="fc-chip-val {cls}">{reward_str}</span>'
+        "</div>"
     )
 
 
@@ -1975,21 +1973,26 @@ def _confidence_html(level: str) -> str:
     u = (level or "UNKNOWN").upper()
     if u == "UNKNOWN":
         vcls = "confidence-txt--unk"
-        text = "Unknown — need more data."
+        fill_cls = "confidence-fill--unk"
+        text = "UNKNOWN"
     elif u == "HIGH":
         vcls = "confidence-txt--hi"
-        text = "High — strong reward trajectory."
+        fill_cls = "confidence-fill--hi"
+        text = "HIGH"
     elif u == "MEDIUM":
         vcls = "confidence-txt--med"
-        text = "Medium — mixed signals."
+        fill_cls = "confidence-fill--med"
+        text = "MEDIUM"
     else:
         vcls = "confidence-txt--lo"
-        text = "Low — costly or negative trend."
+        fill_cls = "confidence-fill--lo"
+        text = "LOW"
     et = _html_escape(tip)
     tx = _html_escape(text)
     return (
         f'<div class="confidence-shell" title="{et}">'
         f'<div class="confidence-lbl">Confidence</div>'
+        f'<div class="confidence-track"><div class="confidence-fill {fill_cls}"></div></div>'
         f'<div class="confidence-txt {vcls}" title="{et}">{tx}</div>'
         f"</div>"
     )
@@ -2021,7 +2024,27 @@ def build_blocks() -> gr.Blocks:
                         elem_classes=["fc-play-header-slot", "play-header"],
                     )
 
-                    with gr.Group(elem_classes=["card"]):
+                    ls0 = dict(LIVE_STATS_DEFAULT)
+                    with gr.Group(elem_classes=["card", "panel-stats"]):
+                        gr.HTML("<div class='section-title'>Live Stats</div>")
+                        with gr.Row(elem_classes=["stats-row"]):
+                            stat_html_tok_left = gr.HTML(
+                                _stat_html_tokens_left(ls0),
+                                elem_id="fc-play-stat-tokens-left",
+                                elem_classes=["stat-block"],
+                            )
+                            stat_html_steps = gr.HTML(
+                                _stat_html_steps(ls0),
+                                elem_id="fc-play-stat-steps",
+                                elem_classes=["stat-block"],
+                            )
+                            stat_html_reward = gr.HTML(
+                                _stat_html_reward(ls0),
+                                elem_id="fc-play-stat-reward",
+                                elem_classes=["stat-block"],
+                            )
+
+                    with gr.Group(elem_classes=["card", "panel-board"]):
                         gr.HTML("<div class='section-title'>Game Board</div>")
                         b_reset = gr.Button(
                             "Start new episode",
@@ -2043,27 +2066,7 @@ def build_blocks() -> gr.Blocks:
                             elem_classes=["fc-footer-wrap"],
                         )
 
-                    ls0 = dict(LIVE_STATS_DEFAULT)
-                    with gr.Group(elem_classes=["card"]):
-                        gr.HTML("<div class='section-title'>Live Stats</div>")
-                        with gr.Row(elem_classes=["stats-row"]):
-                            stat_html_tok_left = gr.HTML(
-                                _stat_html_tokens_left(ls0),
-                                elem_id="fc-play-stat-tokens-left",
-                                elem_classes=["stat-block"],
-                            )
-                            stat_html_steps = gr.HTML(
-                                _stat_html_steps(ls0),
-                                elem_id="fc-play-stat-steps",
-                                elem_classes=["stat-block"],
-                            )
-                            stat_html_reward = gr.HTML(
-                                _stat_html_reward(ls0),
-                                elem_id="fc-play-stat-reward",
-                                elem_classes=["stat-block"],
-                            )
-
-                    with gr.Group(elem_classes=["card"]):
+                    with gr.Group(elem_classes=["card", "panel-confidence"]):
                         gr.HTML("<div class='section-title'>Confidence</div>")
                         confidence_display = gr.HTML(
                             _confidence_html("UNKNOWN"),
@@ -2071,7 +2074,7 @@ def build_blocks() -> gr.Blocks:
                             elem_classes=["fc-conf-outer"],
                         )
 
-                    with gr.Group(elem_classes=["card"]):
+                    with gr.Group(elem_classes=["card", "panel-actions"]):
                         gr.HTML("<div class='section-title'>Actions</div>")
                         with gr.Row(elem_classes=["btn-grid"]):
                             b_low = gr.Button(
@@ -2120,7 +2123,7 @@ def build_blocks() -> gr.Blocks:
                                 ],
                             )
 
-                    with gr.Group(elem_classes=["card"]):
+                    with gr.Group(elem_classes=["card", "panel-last"]):
                         gr.HTML("<div class='section-title'>Last Action</div>")
                         last_block = gr.HTML(
                             "<div class='fc-card-log fc-play-log log-panel'>"
@@ -2129,7 +2132,7 @@ def build_blocks() -> gr.Blocks:
                             elem_classes=["log-panel"],
                         )
 
-                    with gr.Group(elem_classes=["card"]):
+                    with gr.Group(elem_classes=["card", "panel-history"]):
                         gr.HTML("<div class='section-title'>Episode History</div>")
                         episode_trace_display = gr.HTML(
                             _episode_trace_html([], False),
