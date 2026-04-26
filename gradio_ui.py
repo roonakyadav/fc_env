@@ -812,6 +812,7 @@ PLAY_TAB_HEAD_INJECT = r"""
 .play-tab .panel-stats .section-title,
 .play-tab .panel-confidence .section-title,
 .play-tab .panel-actions .section-title { display: none !important; }
+.play-tab .panel-confidence { display: none !important; }
 
 .play-tab .play-header h1 {
   font-size: 1.05rem !important;
@@ -2072,6 +2073,7 @@ def build_blocks() -> gr.Blocks:
                             _confidence_html("UNKNOWN"),
                             elem_id="fc-play-confidence",
                             elem_classes=["fc-conf-outer"],
+                            visible=False,
                         )
 
                     with gr.Group(elem_classes=["card", "panel-actions"]):
