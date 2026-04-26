@@ -7,3 +7,4 @@ tensorboard_logs/
 fc_openenv.egg-info/
 __pycache__/
 *.pyc
+tensorboard_logs/
