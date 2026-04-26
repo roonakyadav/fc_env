@@ -254,7 +254,6 @@ def evaluate_ppo_vec(
     return {
         "win_rate": sum(wins) / n,
         "avg_reward": sum(r_all) / n,
-        "avg_tokens_used": sum(tok) / n,
         "avg_steps": sum(steps) / n,
     }
 
@@ -402,19 +401,16 @@ def run_training_pipeline(seed: int = SEED) -> dict:
         "random_eval": {
             "win_rate": round(best["baseline_win_rate"], 4),
             "avg_reward": round(best["baseline_reward"], 4),
-            "avg_tokens_used": round(best["baseline_tokens_used"], 2),
             "avg_steps": round(best["baseline_steps"], 2),
         },
         "q_tabular_eval": {
             "win_rate": round(best["trained_win_rate"], 4),
             "avg_reward": round(best["trained_reward"], 4),
-            "avg_tokens_used": round(best["trained_tokens_used"], 2),
             "avg_steps": round(best["trained_steps"], 2),
         },
         "ppo_eval": {
             "win_rate": round(float(ppo_stats["win_rate"]), 4),
             "avg_reward": round(float(ppo_stats["avg_reward"]), 4),
-            "avg_tokens_used": round(float(ppo_stats["avg_tokens_used"]), 2),
             "avg_steps": round(float(ppo_stats["avg_steps"]), 2),
         },
         "q_reward_delta": round(best["reward_delta"], 4),
@@ -436,17 +432,17 @@ def main() -> None:
     re = result["random_eval"]
     print(
         f"Random: reward={re['avg_reward']:.3f} win={re['win_rate']:.3f} "
-        f"tok={re['avg_tokens_used']:.2f} steps={re['avg_steps']:.2f}"
+        f"steps={re['avg_steps']:.2f}"
     )
     qe = result["q_tabular_eval"]
     print(
         f"Q-tab: reward={qe['avg_reward']:.3f} win={qe['win_rate']:.3f} "
-        f"tok={qe['avg_tokens_used']:.2f} steps={qe['avg_steps']:.2f}"
+        f"steps={qe['avg_steps']:.2f}"
     )
     pe = result["ppo_eval"]
     print(
         f"PPO:  reward={pe['avg_reward']:.3f} win={pe['win_rate']:.3f} "
-        f"tok={pe['avg_tokens_used']:.2f} steps={pe['avg_steps']:.2f}"
+        f"steps={pe['avg_steps']:.2f}"
     )
     print(f"Saved metrics: {METRICS_CSV}, {EVAL_OUTPUT_PATH}")
     print(f"Saved plots: {REWARD_PLOT}, {WINRATE_PLOT}")

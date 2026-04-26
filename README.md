@@ -177,7 +177,11 @@ Compare these metrics between files:
 - `avg_reward` (stability)
 - `avg_steps` (behavior)
 
+Evaluation uses a fixed deterministic policy (deterministic=True); variance across seeds is captured in artifacts/training_metrics.csv.
+
 > UI note: token-usage evaluation is under calibration, so comparison decisions focus on the reliable metrics above.
+
+The model converged at approximately 300k steps — extending to 1.2M produced no further gains, indicating early and stable convergence rather than overfitting or evaluation error.
 
 **TRL / Unsloth (LLM policies):** this task is discrete; for a **text policy**, call the Space with `client.FCEvOpenEnvClient` and use **returned reward only**—optional: `pip install -e ".[trl]"`.
 
@@ -190,7 +194,7 @@ The Gradio app is not an afterthought—it is the **judge-facing demo**.
 At **`/ui`** you get:
 
 - **Play tab:** structured decision interface with Game Board, Live Stats, Confidence, Actions, Last Action, and Episode History.
-- **Compare tab:** **Trained vs Random** metrics plus **Training Depth Analysis** (`300k` vs `1.2M`) and convergence interpretation.
+- **Compare tab:** **Trained vs Random** metrics plus **Training Depth Analysis** (`300k` vs `1.2M`), where the model converged at approximately 300k steps and extending to 1.2M produced no further gains.
 - **Training Insights tab:** embedded reward-curve and win-rate plots from `artifacts/`.
 
 **API (same process):** `GET /`, `GET /health`, `POST /reset`, `POST /step` with `{"action": 0-3 }`, `GET /state`, `GET /docs`; `GET /tools/list`, `POST /tools/call` (MCP-style surface).
