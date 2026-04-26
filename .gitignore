@@ -4,3 +4,6 @@ tensorboard_logs/
 *.pyc
 .DS_Store
 *.egg-info/
+fc_openenv.egg-info/
+__pycache__/
+*.pyc
