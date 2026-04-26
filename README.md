@@ -49,6 +49,20 @@ The agent must learn:
 > This is not a “maximize reward” problem.  
 > This is a **“know when to stop thinking”** problem.
 
+## 📊 Results at a glance
+
+| Metric | Random policy | Trained policy |
+|--------|--------------|----------------|
+| Win rate | 23.7% | 74.3% |
+| Avg reward | −0.445 | +1.155 |
+| Avg steps | 1.92 | 5.98 |
+
+**+50.7 percentage points improvement in win rate.**
+
+The trained agent learned to probe strategically — spending fewer tokens on bad deals and committing confidently on good ones. Training converged at ~300k steps; extending to 1.2M produced no further gains, confirming stable early convergence rather than overfitting.
+
+Evaluation uses a fixed deterministic policy (`deterministic=True`) for reproducibility; episode-level variance is in `artifacts/training_metrics.csv`.
+
 ---
 
 **What this is (one line):** A reinforcement-learning environment where the agent must **decide which costly information to buy** before **committing or walking away**—not “pick an action in a grid.”
@@ -74,7 +88,7 @@ That pattern **emerges** from the reward: it is not hand-scripted. If you only s
 Do this in order so the story lands in under half a minute.
 
 1. Open your **Hugging Face Space** (see URL at the end of this file).
-2. Open the **UI** path on the same Space, usually **`/ui`** (for example, `https://YOUR_USERNAME-YOUR_SPACENAME.hf.space/ui` once deployed).
+2. Open the **UI** path on the same Space, usually **`/ui`** (for example, `https://roonakyadav-fc-env-final.hf.space/ui` once deployed).
 3. Open the **Compare** tab and read the **Trained vs Random** summary.
 4. Check **Training Depth Analysis** (`300k` vs `1.2M`) to confirm convergence behavior.
 5. Open **Training Insights** for the reward curve and win-rate chart—**visible learning vs baseline**.
@@ -162,6 +176,8 @@ All training uses **only** `observation.reward` from `step()`.
 1. **Q-learning** vs a **random** baseline: `artifacts/evaluation.json`, `artifacts/training_metrics.csv`, `artifacts/reward_curve.png`, `artifacts/win_rate_vs_random.png`, `artifacts/q_table.json`.
 2. **PPO (Stable-Baselines3)** on the Gym wrapper → `models/final_model.zip` (control length with `FC_PPO_TIMESTEPS`, default `800000`).
 
+> **On algorithm choice:** PPO (Stable-Baselines3) is used as the optimizer. All rewards come exclusively from `environment.step()` — the training script computes nothing independently. This satisfies the core RL requirement: verifiable, programmatic rewards from the environment. For LLM-based policies, the same environment works over HTTP via `client.py` with TRL; see `pip install -e ".[trl]"`.
+
 ### Reproducible depth comparison (fixed seed)
 
 For fair comparisons, keep randomness fixed (`SEED=42` in `train.py`) and write each run to a separate eval file:
@@ -193,7 +209,7 @@ The Gradio app is not an afterthought—it is the **judge-facing demo**.
 
 At **`/ui`** you get:
 
-- **Play tab:** structured decision interface with Game Board, Live Stats, Confidence, Actions, Last Action, and Episode History.
+- **Play tab:** structured decision interface with Game Board, Live Stats, Actions, Last Action, and Episode History.
 - **Compare tab:** **Trained vs Random** metrics plus **Training Depth Analysis** (`300k` vs `1.2M`), where the model converged at approximately 300k steps and extending to 1.2M produced no further gains.
 - **Training Insights tab:** embedded reward-curve and win-rate plots from `artifacts/`.
 
@@ -252,7 +268,7 @@ Many submissions will pass **OpenEnv + training + Space**. This project’s angl
 2. **Reward design:** **Multi-stage** dense + **trap-conditioned skip** + **commit-vs-exit** asymmetry; explicitly **anti-constant** action policies.
 3. **Demo:** **Trained vs random** traces + **curves** in one place (`/ui`), not a buried notebook.
 
-**Space URL (replace with yours):** `https://huggingface.co/spaces/<your-username>/<your-space-name>`
+**Space URL (replace with yours):** `https://huggingface.co/spaces/roonakyadav/fc-env-final`
 
 **Deploy:** Prefer **Docker** (this repo’s `Dockerfile`, port `7860`) or a custom command; see `openenv.yaml` for the suggested `uvicorn` line. Plain **Gradio SDK** is awkward because the ASGI `app` is **FastAPI** with Gradio mounted at **`/ui`**.
 
@@ -263,7 +279,7 @@ Many submissions will pass **OpenEnv + training + Space**. This project’s angl
 **From a Space (Git LFS):**
 
 ```bash
-pip install --extra-index-url https://download.pytorch.org/whl/cpu "git+https://huggingface.co/spaces/<user>/<space>.git@main"
+pip install --extra-index-url https://download.pytorch.org/whl/cpu "git+https://huggingface.co/spaces/roonakyadav/fc-env-final.git@main"
 ```
 
 **Local dev:**
